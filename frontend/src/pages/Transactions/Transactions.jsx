@@ -17,6 +17,8 @@ import {
   Row,
   Col,
   Statistic,
+  Tabs,
+  Divider,
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -26,6 +28,8 @@ import {
   SendOutlined,
   SearchOutlined,
   CalendarOutlined,
+  FilterOutlined,
+  ClearOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -36,12 +40,14 @@ import { warehouseService } from '../../services/warehouseService';
 import { userService } from '../../services/userService';
 import { useAuthStore } from '../../store/authStore';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { TabPane } = Tabs;
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [items, setItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -56,6 +62,15 @@ const Transactions = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
+  // Search and filter states
+  const [searchText, setSearchText] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterEntityType, setFilterEntityType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterWarehouse, setFilterWarehouse] = useState('');
+  const [filterUser, setFilterUser] = useState('');
+  const [dateRange, setDateRange] = useState([]);
+
   const transactionTypes = ['INBOUND', 'OUTBOUND', 'PRODUCTION', 'TRANSFER', 'ADJUSTMENT'];
   const entityTypes = ['ITEMS', 'PRODUCTS'];
   const transactionStatuses = ['COMPLETED', 'PENDING', 'CANCELLED', 'RETURNED'];
@@ -66,6 +81,7 @@ const Transactions = () => {
       dataIndex: 'referenceNumber',
       key: 'referenceNumber',
       width: 120,
+      sorter: (a, b) => a.referenceNumber.localeCompare(b.referenceNumber),
     },
     {
       title: 'Turi',
@@ -77,6 +93,7 @@ const Transactions = () => {
           {type === 'INBOUND' ? 'Kirish' : type === 'OUTBOUND' ? 'Chiqish' : type}
         </Tag>
       ),
+      sorter: (a, b) => a.transactionType.localeCompare(b.transactionType),
     },
     {
       title: 'Obyekt turi',
@@ -119,6 +136,7 @@ const Transactions = () => {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 80,
+      sorter: (a, b) => a.quantity - b.quantity,
     },
     {
       title: 'Birlik narxi',
@@ -126,6 +144,7 @@ const Transactions = () => {
       key: 'unitPrice',
       width: 100,
       render: (price) => `$${price}`,
+      sorter: (a, b) => a.unitPrice - b.unitPrice,
     },
     {
       title: 'Jami narx',
@@ -133,6 +152,7 @@ const Transactions = () => {
       key: 'totalPrice',
       width: 100,
       render: (price) => `$${price}`,
+      sorter: (a, b) => a.totalPrice - b.totalPrice,
     },
     {
       title: 'Holat',
@@ -161,6 +181,7 @@ const Transactions = () => {
       key: 'transactionDate',
       width: 120,
       render: (date) => dayjs(date).format('DD.MM.YYYY HH:mm'),
+      sorter: (a, b) => new Date(a.transactionDate) - new Date(b.transactionDate),
     },
     {
       title: 'Amallar',
@@ -208,6 +229,7 @@ const Transactions = () => {
         userService.getAll(),
       ]);
       setTransactions(transactionsData);
+      setFilteredTransactions(transactionsData);
       setItems(itemsData);
       setProducts(productsData);
       setWarehouses(warehousesData);
@@ -217,6 +239,66 @@ const Transactions = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...transactions];
+
+    // Search by reference number
+    if (searchText) {
+      filtered = filtered.filter(transaction =>
+        transaction.referenceNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.notes?.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Filter by transaction type
+    if (filterType) {
+      filtered = filtered.filter(transaction => transaction.transactionType === filterType);
+    }
+
+    // Filter by entity type
+    if (filterEntityType) {
+      filtered = filtered.filter(transaction => transaction.entityType === filterEntityType);
+    }
+
+    // Filter by status
+    if (filterStatus) {
+      filtered = filtered.filter(transaction => transaction.status === filterStatus);
+    }
+
+    // Filter by warehouse
+    if (filterWarehouse) {
+      filtered = filtered.filter(transaction => transaction.warehouse?.warehouseId === filterWarehouse);
+    }
+
+    // Filter by user
+    if (filterUser) {
+      filtered = filtered.filter(transaction => transaction.user?.userId === filterUser);
+    }
+
+    // Filter by date range
+    if (dateRange.length === 2) {
+      const [startDate, endDate] = dateRange;
+      filtered = filtered.filter(transaction => {
+        const transactionDate = dayjs(transaction.transactionDate);
+        return transactionDate.isAfter(startDate.startOf('day')) && 
+               transactionDate.isBefore(endDate.endOf('day'));
+      });
+    }
+
+    setFilteredTransactions(filtered);
+  };
+
+  const clearFilters = () => {
+    setSearchText('');
+    setFilterType('');
+    setFilterEntityType('');
+    setFilterStatus('');
+    setFilterWarehouse('');
+    setFilterUser('');
+    setDateRange([]);
+    setFilteredTransactions(transactions);
   };
 
   const handleAdd = () => {
@@ -307,10 +389,10 @@ const Transactions = () => {
   };
 
   const getStats = () => {
-    const inboundCount = transactions.filter(t => t.transactionType === 'INBOUND').length;
-    const outboundCount = transactions.filter(t => t.transactionType === 'OUTBOUND').length;
-    const totalValue = transactions.reduce((sum, t) => sum + (parseFloat(t.totalPrice) || 0), 0);
-    const pendingCount = transactions.filter(t => t.status === 'PENDING').length;
+    const inboundCount = filteredTransactions.filter(t => t.transactionType === 'INBOUND').length;
+    const outboundCount = filteredTransactions.filter(t => t.transactionType === 'OUTBOUND').length;
+    const totalValue = filteredTransactions.reduce((sum, t) => sum + (parseFloat(t.totalPrice) || 0), 0);
+    const pendingCount = filteredTransactions.filter(t => t.status === 'PENDING').length;
 
     return { inboundCount, outboundCount, totalValue, pendingCount };
   };
@@ -320,6 +402,10 @@ const Transactions = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [searchText, filterType, filterEntityType, filterStatus, filterWarehouse, filterUser, dateRange, transactions]);
 
   return (
     <div>
@@ -409,10 +495,141 @@ const Transactions = () => {
         </Col>
       </Row>
 
+      {/* Search and Filter Section */}
+      <Card className="mb-6">
+        <Title level={4} className="mb-4">
+          <FilterOutlined /> Qidirish va filtrlash
+        </Title>
+        
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={8}>
+            <Input
+              placeholder="Raqam yoki izoh bo'yicha qidiring..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Tranzaksiya turi"
+              value={filterType}
+              onChange={setFilterType}
+              allowClear
+              className="w-full"
+            >
+              {transactionTypes.map(type => (
+                <Option key={type} value={type}>
+                  {type === 'INBOUND' ? 'Kirish' : 
+                   type === 'OUTBOUND' ? 'Chiqish' : 
+                   type === 'PRODUCTION' ? 'Ishlab chiqarish' :
+                   type === 'TRANSFER' ? 'Ko\'chirish' : 'Tuzatish'}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Obyekt turi"
+              value={filterEntityType}
+              onChange={setFilterEntityType}
+              allowClear
+              className="w-full"
+            >
+              {entityTypes.map(type => (
+                <Option key={type} value={type}>
+                  {type === 'ITEMS' ? 'Xomashyo' : 'Mahsulot'}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Holat"
+              value={filterStatus}
+              onChange={setFilterStatus}
+              allowClear
+              className="w-full"
+            >
+              {transactionStatuses.map(status => (
+                <Option key={status} value={status}>
+                  {status === 'COMPLETED' ? 'Tugallangan' :
+                   status === 'PENDING' ? 'Kutilmoqda' :
+                   status === 'CANCELLED' ? 'Bekor qilingan' : 'Qaytarilgan'}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Omborxona"
+              value={filterWarehouse}
+              onChange={setFilterWarehouse}
+              allowClear
+              className="w-full"
+            >
+              {warehouses.map(warehouse => (
+                <Option key={warehouse.warehouseId} value={warehouse.warehouseId}>
+                  {warehouse.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Select
+              placeholder="Foydalanuvchi"
+              value={filterUser}
+              onChange={setFilterUser}
+              allowClear
+              className="w-full"
+            >
+              {users.map(user => (
+                <Option key={user.userId} value={user.userId}>
+                  {user.fullName}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <RangePicker
+              placeholder={['Boshlanish sanasi', 'Tugash sanasi']}
+              value={dateRange}
+              onChange={setDateRange}
+              className="w-full"
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={8}>
+            <Button
+              icon={<ClearOutlined />}
+              onClick={clearFilters}
+              className="w-full"
+            >
+              Filtrlarni tozalash
+            </Button>
+          </Col>
+        </Row>
+        
+        <Divider />
+        
+        <div className="flex justify-between items-center">
+          <Text type="secondary">
+            Jami: {transactions.length} ta tranzaksiya, Ko'rsatilmoqda: {filteredTransactions.length} ta
+          </Text>
+        </div>
+      </Card>
+
       <Card>
         <Table
           columns={columns}
-          dataSource={transactions}
+          dataSource={filteredTransactions}
           loading={loading}
           rowKey="transactionId"
           scroll={{ x: 1400 }}
