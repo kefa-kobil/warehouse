@@ -25,7 +25,8 @@
     "total": "Жами",
     "price": "Нарх",
     "quantity": "Миқдор",
-    "code": "Код"
+    "code": "Код",
+    "required": "Мажбурий"
   },
   "auth": {
     "login": "Кириш",
@@ -47,6 +48,7 @@
     "items": "Хомашёлар",
     "products": "Маҳсулотлар",
     "clients": "Мижозлар",
+    "transactions": "Транзакциялар",
     "reports": "Ҳисоботлар",
     "settings": "Созламалар"
   },
@@ -139,6 +141,36 @@
     "types": {
       "CORPORATE": "Корпоратив",
       "RETAIL": "Чакана"
+    }
+  },
+  "transactions": {
+    "title": "Транзакциялар",
+    "addTransaction": "Транзакция қўшиш",
+    "editTransaction": "Транзакцияни таҳрирлаш",
+    "deleteTransaction": "Транзакцияни ўчириш",
+    "transactionType": "Транзакция тури",
+    "entityType": "Объект тури",
+    "referenceNumber": "Рақам",
+    "unitPrice": "Бирлик нархи",
+    "totalPrice": "Жами нарх",
+    "transactionDate": "Транзакция санаси",
+    "notes": "Изоҳ",
+    "types": {
+      "INBOUND": "Кириш",
+      "OUTBOUND": "Чиқиш",
+      "PRODUCTION": "Ишлаб чиқариш",
+      "TRANSFER": "Кўчириш",
+      "ADJUSTMENT": "Тузатиш"
+    },
+    "entityTypes": {
+      "ITEMS": "Хомашёлар",
+      "PRODUCTS": "Маҳсулотлар"
+    },
+    "statuses": {
+      "COMPLETED": "Тугалланган",
+      "PENDING": "Кутилмоқда",
+      "CANCELLED": "Бекор қилинган",
+      "RETURNED": "Қайтарилган"
     }
   }
 }

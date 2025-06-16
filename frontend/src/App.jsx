@@ -14,6 +14,7 @@ import Warehouses from './pages/Warehouses/Warehouses';
 import Items from './pages/Items/Items';
 import Products from './pages/Products/Products';
 import Clients from './pages/Clients/Clients';
+import Transactions from './pages/Transactions/Transactions';
 import { useAuthStore } from './store/authStore';
 
 const App = () => {
@@ -58,6 +59,7 @@ const App = () => {
             <Route path="/items" element={<Items />} />
             <Route path="/products" element={<Products />} />
             <Route path="/clients" element={<Clients />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/login" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

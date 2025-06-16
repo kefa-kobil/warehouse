@@ -13,6 +13,7 @@ import {
   BoxPlotOutlined,
   ShoppingCartOutlined,
   TeamOutlined,
+  SwapOutlined,
   LogoutOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
@@ -68,6 +69,11 @@ const Layout = ({ children }) => {
       key: '/clients',
       icon: <TeamOutlined />,
       label: t('navigation.clients'),
+    },
+    {
+      key: '/transactions',
+      icon: <SwapOutlined />,
+      label: t('navigation.transactions'),
     },
   ];
 

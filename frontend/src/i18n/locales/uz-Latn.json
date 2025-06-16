@@ -25,7 +25,8 @@
     "total": "Jami",
     "price": "Narx",
     "quantity": "Miqdor",
-    "code": "Kod"
+    "code": "Kod",
+    "required": "Majburiy"
   },
   "auth": {
     "login": "Kirish",
@@ -47,6 +48,7 @@
     "items": "Xomashyolar",
     "products": "Mahsulotlar",
     "clients": "Mijozlar",
+    "transactions": "Tranzaksiyalar",
     "reports": "Hisobotlar",
     "settings": "Sozlamalar"
   },
@@ -139,6 +141,36 @@
     "types": {
       "CORPORATE": "Korporativ",
       "RETAIL": "Chakana"
+    }
+  },
+  "transactions": {
+    "title": "Tranzaksiyalar",
+    "addTransaction": "Tranzaksiya qo'shish",
+    "editTransaction": "Tranzaksiyani tahrirlash",
+    "deleteTransaction": "Tranzaksiyani o'chirish",
+    "transactionType": "Tranzaksiya turi",
+    "entityType": "Obyekt turi",
+    "referenceNumber": "Raqam",
+    "unitPrice": "Birlik narxi",
+    "totalPrice": "Jami narx",
+    "transactionDate": "Tranzaksiya sanasi",
+    "notes": "Izoh",
+    "types": {
+      "INBOUND": "Kirish",
+      "OUTBOUND": "Chiqish",
+      "PRODUCTION": "Ishlab chiqarish",
+      "TRANSFER": "Ko'chirish",
+      "ADJUSTMENT": "Tuzatish"
+    },
+    "entityTypes": {
+      "ITEMS": "Xomashyolar",
+      "PRODUCTS": "Mahsulotlar"
+    },
+    "statuses": {
+      "COMPLETED": "Tugallangan",
+      "PENDING": "Kutilmoqda",
+      "CANCELLED": "Bekor qilingan",
+      "RETURNED": "Qaytarilgan"
     }
   }
 }
