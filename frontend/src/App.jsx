@@ -3,8 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ConfigProvider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import uzUZ from 'antd/locale/uz_UZ';
-import enUS from 'antd/locale/en_US';
-import ruRU from 'antd/locale/ru_RU';
 
 import Layout from './components/Layout/Layout';
 import Login from './pages/Auth/Login';
@@ -23,15 +21,7 @@ const App = () => {
   const { isAuthenticated } = useAuthStore();
 
   const getAntdLocale = () => {
-    switch (i18n.language) {
-      case 'uz-Latn':
-      case 'uz-Cyrl':
-        return uzUZ;
-      case 'ru':
-        return ruRU;
-      default:
-        return enUS;
-    }
+    return uzUZ; // Always use Uzbek locale since we only have 2 Uzbek variants
   };
 
   const theme = {

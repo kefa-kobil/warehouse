@@ -4,8 +4,6 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import uzLatn from './locales/uz-Latn.json';
 import uzCyrl from './locales/uz-Cyrl.json';
-import en from './locales/en.json';
-import ru from './locales/ru.json';
 
 const resources = {
   'uz-Latn': {
@@ -13,12 +11,6 @@ const resources = {
   },
   'uz-Cyrl': {
     translation: uzCyrl
-  },
-  en: {
-    translation: en
-  },
-  ru: {
-    translation: ru
   }
 };
 
