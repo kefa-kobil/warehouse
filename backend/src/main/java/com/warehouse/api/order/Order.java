@@ -7,7 +7,6 @@ import com.warehouse.auditing.Auditable;
 import com.warehouse.enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,7 +27,6 @@ public class Order extends Auditable {
     @Column(name = "order_id")
     private Long orderId;
 
-    @NotBlank
     @Size(max = 100)
     @Column(name = "order_number", unique = true)
     private String orderNumber;
