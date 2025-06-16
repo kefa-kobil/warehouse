@@ -74,7 +74,8 @@ const Warehouses = () => {
       setWarehouses(warehousesData);
       setItems(itemsData);
     } catch (error) {
-      message.error(t('common.error'));
+      message.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -95,10 +96,11 @@ const Warehouses = () => {
   const handleDelete = async (id) => {
     try {
       await warehouseService.delete(id);
-      message.success(t('common.success'));
+      message.success('Omborxona muvaffaqiyatli o\'chirildi');
       fetchData();
     } catch (error) {
-      message.error(t('common.error'));
+      message.error('Omborxonani o\'chirishda xatolik yuz berdi');
+      console.error('Error deleting warehouse:', error);
     }
   };
 
@@ -106,14 +108,16 @@ const Warehouses = () => {
     try {
       if (editingWarehouse) {
         await warehouseService.update(editingWarehouse.warehouseId, values);
+        message.success('Omborxona muvaffaqiyatli yangilandi');
       } else {
         await warehouseService.create(values);
+        message.success('Omborxona muvaffaqiyatli yaratildi');
       }
-      message.success(t('common.success'));
       setModalVisible(false);
       fetchData();
     } catch (error) {
-      message.error(t('common.error'));
+      message.error('Omborxonani saqlashda xatolik yuz berdi');
+      console.error('Error saving warehouse:', error);
     }
   };
 
@@ -173,7 +177,8 @@ const Warehouses = () => {
       setBulkModalVisible(false);
       fetchData();
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      message.error('Ommaviy kirishda xatolik yuz berdi');
+      console.error('Error in bulk inbound:', error);
     }
   };
 
@@ -187,14 +192,34 @@ const Warehouses = () => {
     const totalValue = warehouseItems.reduce((sum, item) => 
       sum + ((item.quantity || 0) * (item.price || 0)), 0
     );
+    const lowStockItems = warehouseItems.filter(item => item.quantity < 10).length;
 
-    return { totalItems, totalQuantity, totalValue, warehouseItems };
+    return { totalItems, totalQuantity, totalValue, warehouseItems, lowStockItems };
   };
 
   const getWarehouseItems = (warehouse) => {
     return items.filter(item => 
       item.warehouse?.warehouseId === warehouse.warehouseId
     );
+  };
+
+  const getCategoryStats = (warehouseItems) => {
+    const categoryStats = {};
+    
+    warehouseItems.forEach(item => {
+      const categoryName = item.category?.name || 'Kategoriyasiz';
+      if (!categoryStats[categoryName]) {
+        categoryStats[categoryName] = { count: 0, totalQuantity: 0, totalValue: 0 };
+      }
+      categoryStats[categoryName].count++;
+      categoryStats[categoryName].totalQuantity += item.quantity || 0;
+      categoryStats[categoryName].totalValue += (item.quantity || 0) * (item.price || 0);
+    });
+
+    return Object.entries(categoryStats).map(([name, stats]) => ({
+      category: name,
+      ...stats,
+    }));
   };
 
   const itemColumns = [
@@ -254,6 +279,33 @@ const Warehouses = () => {
         return <Text className="text-xs font-bold text-green-600">${total.toFixed(2)}</Text>;
       },
       sorter: (a, b) => (a.quantity * a.price) - (b.quantity * b.price),
+    },
+  ];
+
+  const categoryColumns = [
+    {
+      title: 'Kategoriya',
+      dataIndex: 'category',
+      key: 'category',
+      render: (text) => <Tag color="blue" className="text-xs">{text}</Tag>,
+    },
+    {
+      title: 'Xomashyolar soni',
+      dataIndex: 'count',
+      key: 'count',
+      render: (text) => <Text className="text-xs">{text} ta</Text>,
+    },
+    {
+      title: 'Jami miqdor',
+      dataIndex: 'totalQuantity',
+      key: 'totalQuantity',
+      render: (text) => <Text className="text-xs">{text}</Text>,
+    },
+    {
+      title: 'Jami qiymat',
+      dataIndex: 'totalValue',
+      key: 'totalValue',
+      render: (text) => <Text className="text-xs font-medium">${text.toFixed(2)}</Text>,
     },
   ];
 
@@ -375,6 +427,14 @@ const Warehouses = () => {
                     precision={2}
                     valueStyle={{ fontSize: '14px', color: '#3f8600' }}
                   />
+
+                  {stats.lowStockItems > 0 && (
+                    <div className="bg-red-50 p-2 rounded">
+                      <Text className="text-xs text-red-600">
+                        ⚠️ {stats.lowStockItems} ta xomashyo kam qolgan
+                      </Text>
+                    </div>
+                  )}
 
                   {warehouse.description && (
                     <>
@@ -565,7 +625,7 @@ const Warehouses = () => {
         title={
           <div className="flex items-center gap-2">
             <ShopOutlined />
-            <span>{selectedWarehouse?.name} - Xomashyolar</span>
+            <span className="text-sm">{selectedWarehouse?.name} - Xomashyolar</span>
           </div>
         }
         placement="right"
@@ -627,7 +687,7 @@ const Warehouses = () => {
                         <Card className="text-center">
                           <Statistic
                             title={<span className="text-xs">Kam qolgan</span>}
-                            value={warehouseItems.filter(item => item.quantity < 10).length}
+                            value={stats.lowStockItems}
                             valueStyle={{ fontSize: '16px', color: '#ff4d4f' }}
                             suffix={<span className="text-xs">ta</span>}
                           />
@@ -676,7 +736,7 @@ const Warehouses = () => {
               key="2"
             >
               <div className="space-y-4">
-                <Card title="Asosiy ma'lumotlar">
+                <Card title={<span className="text-sm">Asosiy ma'lumotlar</span>}>
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={12}>
                       <div className="space-y-2">
@@ -725,52 +785,10 @@ const Warehouses = () => {
                   </Row>
                 </Card>
 
-                <Card title="Kategoriyalar bo'yicha taqsimot">
+                <Card title={<span className="text-sm">Kategoriyalar bo'yicha taqsimot</span>}>
                   {(() => {
                     const warehouseItems = getWarehouseItems(selectedWarehouse);
-                    const categoryStats = {};
-                    
-                    warehouseItems.forEach(item => {
-                      const categoryName = item.category?.name || 'Kategoriyasiz';
-                      if (!categoryStats[categoryName]) {
-                        categoryStats[categoryName] = { count: 0, totalQuantity: 0, totalValue: 0 };
-                      }
-                      categoryStats[categoryName].count++;
-                      categoryStats[categoryName].totalQuantity += item.quantity || 0;
-                      categoryStats[categoryName].totalValue += (item.quantity || 0) * (item.price || 0);
-                    });
-
-                    const categoryData = Object.entries(categoryStats).map(([name, stats]) => ({
-                      category: name,
-                      ...stats,
-                    }));
-
-                    const categoryColumns = [
-                      {
-                        title: 'Kategoriya',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (text) => <Tag color="blue" className="text-xs">{text}</Tag>,
-                      },
-                      {
-                        title: 'Xomashyolar soni',
-                        dataIndex: 'count',
-                        key: 'count',
-                        render: (text) => <Text className="text-xs">{text} ta</Text>,
-                      },
-                      {
-                        title: 'Jami miqdor',
-                        dataIndex: 'totalQuantity',
-                        key: 'totalQuantity',
-                        render: (text) => <Text className="text-xs">{text}</Text>,
-                      },
-                      {
-                        title: 'Jami qiymat',
-                        dataIndex: 'totalValue',
-                        key: 'totalValue',
-                        render: (text) => <Text className="text-xs font-medium">${text.toFixed(2)}</Text>,
-                      },
-                    ];
+                    const categoryData = getCategoryStats(warehouseItems);
 
                     return categoryData.length > 0 ? (
                       <Table
@@ -779,6 +797,7 @@ const Warehouses = () => {
                         rowKey="category"
                         size="small"
                         pagination={false}
+                        scroll={{ x: 400 }}
                       />
                     ) : (
                       <Empty 

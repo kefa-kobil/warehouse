@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = {"order"})
 @Data
 @Entity
 @Table(name = "order_item")
@@ -25,7 +25,7 @@ public class OrderItem extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "orderItems"})
     private Order order;
 
     @ManyToOne(fetch = FetchType.EAGER)

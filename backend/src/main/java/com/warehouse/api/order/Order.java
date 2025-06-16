@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = {"orderItems"})
 @Data
 @Entity
 @Table(name = "orders")
@@ -61,5 +61,6 @@ public class Order extends Auditable {
     private String supplier;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"order"})
     private List<OrderItem> orderItems;
 }
