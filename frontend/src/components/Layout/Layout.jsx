@@ -14,7 +14,7 @@ import {
   ShoppingCartOutlined,
   TeamOutlined,
   SwapOutlined,
-  FactoryOutlined,
+  ToolOutlined,
   LogoutOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
@@ -68,7 +68,7 @@ const Layout = ({ children }) => {
     },
     {
       key: '/production',
-      icon: <FactoryOutlined />,
+      icon: <ToolOutlined />,
       label: 'Ishlab chiqarish',
     },
     {
