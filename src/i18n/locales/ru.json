@@ -1,0 +1,144 @@
+{
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "add": "Добавить",
+    "search": "Поиск",
+    "actions": "Действия",
+    "yes": "Да",
+    "no": "Нет",
+    "loading": "Загрузка...",
+    "success": "Успешно",
+    "error": "Ошибка",
+    "warning": "Предупреждение",
+    "info": "Информация",
+    "confirm": "Подтвердить",
+    "name": "Название",
+    "description": "Описание",
+    "status": "Статус",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "total": "Всего",
+    "price": "Цена",
+    "quantity": "Количество",
+    "code": "Код"
+  },
+  "auth": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "username": "Имя пользователя",
+    "password": "Пароль",
+    "loginTitle": "Вход в систему",
+    "loginSubtitle": "Система управления складом",
+    "loginButton": "Войти",
+    "loginError": "Неверное имя пользователя или пароль",
+    "loginSuccess": "Успешный вход"
+  },
+  "navigation": {
+    "dashboard": "Панель управления",
+    "users": "Пользователи",
+    "categories": "Категории",
+    "units": "Единицы измерения",
+    "warehouses": "Склады",
+    "items": "Сырье",
+    "products": "Продукты",
+    "clients": "Клиенты",
+    "reports": "Отчеты",
+    "settings": "Настройки"
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "totalUsers": "Всего пользователей",
+    "totalItems": "Всего сырья",
+    "totalProducts": "Всего продуктов",
+    "totalClients": "Всего клиентов",
+    "recentActivity": "Последняя активность",
+    "statistics": "Статистика",
+    "overview": "Обзор"
+  },
+  "users": {
+    "title": "Пользователи",
+    "addUser": "Добавить пользователя",
+    "editUser": "Редактировать пользователя",
+    "deleteUser": "Удалить пользователя",
+    "fullName": "Полное имя",
+    "email": "Email",
+    "phone": "Телефон",
+    "role": "Роль",
+    "telegram": "Telegram",
+    "memo": "Заметка",
+    "roles": {
+      "ADMIN": "Администратор",
+      "MENEJER": "Менеджер",
+      "HR": "HR",
+      "ISHCHI": "Рабочий",
+      "QOROVUL": "Охранник"
+    }
+  },
+  "categories": {
+    "title": "Категории",
+    "addCategory": "Добавить категорию",
+    "editCategory": "Редактировать категорию",
+    "deleteCategory": "Удалить категорию",
+    "categoryName": "Название категории"
+  },
+  "units": {
+    "title": "Единицы измерения",
+    "addUnit": "Добавить единицу",
+    "editUnit": "Редактировать единицу",
+    "deleteUnit": "Удалить единицу",
+    "unitName": "Название единицы"
+  },
+  "warehouses": {
+    "title": "Склады",
+    "addWarehouse": "Добавить склад",
+    "editWarehouse": "Редактировать склад",
+    "deleteWarehouse": "Удалить склад",
+    "warehouseName": "Название склада",
+    "location": "Местоположение",
+    "manager": "Менеджер"
+  },
+  "items": {
+    "title": "Сырье",
+    "addItem": "Добавить сырье",
+    "editItem": "Редактировать сырье",
+    "deleteItem": "Удалить сырье",
+    "itemName": "Название сырья",
+    "category": "Категория",
+    "warehouse": "Склад",
+    "unit": "Единица измерения"
+  },
+  "products": {
+    "title": "Продукты",
+    "addProduct": "Добавить продукт",
+    "editProduct": "Редактировать продукт",
+    "deleteProduct": "Удалить продукт",
+    "productName": "Название продукта",
+    "costPrice": "Себестоимость",
+    "salePrice": "Цена продажи",
+    "category": "Категория",
+    "warehouse": "Склад",
+    "unit": "Единица измерения"
+  },
+  "clients": {
+    "title": "Клиенты",
+    "addClient": "Добавить клиента",
+    "editClient": "Редактировать клиента",
+    "deleteClient": "Удалить клиента",
+    "clientName": "Имя клиента",
+    "email": "Email",
+    "phone": "Телефон",
+    "address": "Адрес",
+    "type": "Тип",
+    "totalOrders": "Всего заказов",
+    "totalValue": "Общая стоимость",
+    "types": {
+      "CORPORATE": "Корпоративный",
+      "RETAIL": "Розничный"
+    }
+  }
+}
