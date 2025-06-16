@@ -27,7 +27,7 @@ import {
   PlayCircleOutlined,
   CheckCircleOutlined,
   StopOutlined,
-  FactoryOutlined,
+  ToolOutlined,
   ClockCircleOutlined,
   PlusCircleOutlined,
   MinusCircleOutlined,
@@ -458,7 +458,7 @@ const Production = () => {
             <Statistic
               title="Jarayonda"
               value={stats.inProgressCount}
-              prefix={<FactoryOutlined />}
+              prefix={<ToolOutlined />}
               valueStyle={{ color: '#fa8c16' }}
             />
           </Card>
