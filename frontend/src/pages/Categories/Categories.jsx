@@ -1,82 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Modal,
-  Form,
-  Input,
-  message,
-  Popconfirm,
-  Typography,
-  Card,
-} from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Typography, Card, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { categoryService } from '../../services/categoryService';
+
+import CategoryTable from './CategoryTable';
+import CategoryModal from './CategoryModal';
+import CategorySearch from './CategorySearch';
 
 const { Title } = Typography;
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [form] = Form.useForm();
   const { t } = useTranslation();
-
-  const columns = [
-    {
-      title: t('categories.categoryName'),
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: t('common.created'),
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: t('common.actions'),
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            {t('common.edit')}
-          </Button>
-          <Popconfirm
-            title={t('categories.deleteCategory')}
-            onConfirm={() => handleDelete(record.categoryId)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Button
-              type="primary"
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            >
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
 
   const fetchCategories = async () => {
     setLoading(true);
     try {
       const data = await categoryService.getAll();
       setCategories(data);
+      setFilteredCategories(data);
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error fetching categories:', error);
     } finally {
       setLoading(false);
     }
@@ -84,38 +33,36 @@ const Categories = () => {
 
   const handleAdd = () => {
     setEditingCategory(null);
-    form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (category) => {
     setEditingCategory(category);
-    form.setFieldsValue(category);
     setModalVisible(true);
   };
 
   const handleDelete = async (id) => {
     try {
       await categoryService.delete(id);
-      message.success(t('common.success'));
       fetchCategories();
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error deleting category:', error);
     }
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      if (editingCategory) {
-        await categoryService.update(editingCategory.categoryId, values);
-      } else {
-        await categoryService.create(values);
-      }
-      message.success(t('common.success'));
-      setModalVisible(false);
-      fetchCategories();
-    } catch (error) {
-      message.error(t('common.error'));
+  const handleModalSuccess = () => {
+    setModalVisible(false);
+    fetchCategories();
+  };
+
+  const handleSearch = (searchText) => {
+    if (!searchText) {
+      setFilteredCategories(categories);
+    } else {
+      const filtered = categories.filter(category =>
+        category.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredCategories(filtered);
     }
   };
 
@@ -137,45 +84,22 @@ const Categories = () => {
       </div>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={categories}
+        <CategorySearch onSearch={handleSearch} />
+        
+        <CategoryTable
+          categories={filteredCategories}
           loading={loading}
-          rowKey="categoryId"
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Card>
 
-      <Modal
-        title={editingCategory ? t('categories.editCategory') : t('categories.addCategory')}
-        open={modalVisible}
+      <CategoryModal
+        visible={modalVisible}
+        editingCategory={editingCategory}
         onCancel={() => setModalVisible(false)}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="name"
-            label={t('categories.categoryName')}
-            rules={[{ required: true, message: t('common.required') }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                {t('common.save')}
-              </Button>
-              <Button onClick={() => setModalVisible(false)}>
-                {t('common.cancel')}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };
