@@ -1,5 +1,6 @@
 package com.warehouse.api.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.warehouse.api.category.Category;
 import com.warehouse.api.unit.Unit;
 import com.warehouse.api.warehouse.Warehouse;
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 @Data
 @Entity
 @Table(name = "product")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Product extends Auditable {
 
     @Id
@@ -33,16 +35,19 @@ public class Product extends Auditable {
     @Size(max = 200)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "warehouse_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Warehouse warehouse;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "unit_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Unit unit;
 
     @DecimalMin(value = "0.0", inclusive = true)

@@ -1,5 +1,6 @@
 package com.warehouse.api.unit;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.warehouse.auditing.Auditable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Entity
 @Table(name = "unit")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Unit extends Auditable {
 
     @Id
