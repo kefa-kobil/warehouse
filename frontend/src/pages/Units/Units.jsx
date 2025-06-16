@@ -1,82 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Modal,
-  Form,
-  Input,
-  message,
-  Popconfirm,
-  Typography,
-  Card,
-} from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Typography, Card, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { unitService } from '../../services/unitService';
+
+import UnitTable from './UnitTable';
+import UnitModal from './UnitModal';
+import UnitSearch from './UnitSearch';
 
 const { Title } = Typography;
 
 const Units = () => {
   const [units, setUnits] = useState([]);
+  const [filteredUnits, setFilteredUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUnit, setEditingUnit] = useState(null);
-  const [form] = Form.useForm();
   const { t } = useTranslation();
-
-  const columns = [
-    {
-      title: t('units.unitName'),
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: t('common.created'),
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: t('common.actions'),
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            {t('common.edit')}
-          </Button>
-          <Popconfirm
-            title={t('units.deleteUnit')}
-            onConfirm={() => handleDelete(record.unitId)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Button
-              type="primary"
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            >
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
 
   const fetchUnits = async () => {
     setLoading(true);
     try {
       const data = await unitService.getAll();
       setUnits(data);
+      setFilteredUnits(data);
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error fetching units:', error);
     } finally {
       setLoading(false);
     }
@@ -84,38 +33,36 @@ const Units = () => {
 
   const handleAdd = () => {
     setEditingUnit(null);
-    form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (unit) => {
     setEditingUnit(unit);
-    form.setFieldsValue(unit);
     setModalVisible(true);
   };
 
   const handleDelete = async (id) => {
     try {
       await unitService.delete(id);
-      message.success(t('common.success'));
       fetchUnits();
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error deleting unit:', error);
     }
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      if (editingUnit) {
-        await unitService.update(editingUnit.unitId, values);
-      } else {
-        await unitService.create(values);
-      }
-      message.success(t('common.success'));
-      setModalVisible(false);
-      fetchUnits();
-    } catch (error) {
-      message.error(t('common.error'));
+  const handleModalSuccess = () => {
+    setModalVisible(false);
+    fetchUnits();
+  };
+
+  const handleSearch = (searchText) => {
+    if (!searchText) {
+      setFilteredUnits(units);
+    } else {
+      const filtered = units.filter(unit =>
+        unit.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredUnits(filtered);
     }
   };
 
@@ -137,45 +84,22 @@ const Units = () => {
       </div>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={units}
+        <UnitSearch onSearch={handleSearch} />
+        
+        <UnitTable
+          units={filteredUnits}
           loading={loading}
-          rowKey="unitId"
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Card>
 
-      <Modal
-        title={editingUnit ? t('units.editUnit') : t('units.addUnit')}
-        open={modalVisible}
+      <UnitModal
+        visible={modalVisible}
+        editingUnit={editingUnit}
         onCancel={() => setModalVisible(false)}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="name"
-            label={t('units.unitName')}
-            rules={[{ required: true, message: t('common.required') }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                {t('common.save')}
-              </Button>
-              <Button onClick={() => setModalVisible(false)}>
-                {t('common.cancel')}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

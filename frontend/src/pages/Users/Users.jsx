@@ -1,111 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Modal,
-  Form,
-  Input,
-  Select,
-  message,
-  Popconfirm,
-  Typography,
-  Card,
-} from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Typography, Card, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { userService } from '../../services/userService';
 
+import UserTable from './UserTable';
+import UserModal from './UserModal';
+import UserSearch from './UserSearch';
+
 const { Title } = Typography;
-const { Option } = Select;
 
 const Users = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [form] = Form.useForm();
   const { t } = useTranslation();
-
-  const roles = ['ADMIN', 'MENEJER', 'HR', 'ISHCHI', 'QOROVUL'];
-
-  const columns = [
-    {
-      title: t('users.fullName'),
-      dataIndex: 'fullName',
-      key: 'fullName',
-    },
-    {
-      title: t('auth.username'),
-      dataIndex: 'username',
-      key: 'username',
-    },
-    {
-      title: t('users.email'),
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: t('users.phone'),
-      dataIndex: 'tel',
-      key: 'tel',
-    },
-    {
-      title: t('users.role'),
-      dataIndex: 'role',
-      key: 'role',
-      render: (role) => t(`users.roles.${role}`),
-    },
-    {
-      title: t('common.status'),
-      dataIndex: 'state',
-      key: 'state',
-      render: (state) => (
-        <span className={state === 'ACTIVE' ? 'text-green-600' : 'text-red-600'}>
-          {state === 'ACTIVE' ? t('common.active') : t('common.inactive')}
-        </span>
-      ),
-    },
-    {
-      title: t('common.actions'),
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            {t('common.edit')}
-          </Button>
-          <Popconfirm
-            title={t('users.deleteUser')}
-            onConfirm={() => handleDelete(record.userId)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Button
-              type="primary"
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            >
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const data = await userService.getAll();
       setUsers(data);
+      setFilteredUsers(data);
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
     }
@@ -113,39 +33,44 @@ const Users = () => {
 
   const handleAdd = () => {
     setEditingUser(null);
-    form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
-    form.setFieldsValue(user);
     setModalVisible(true);
   };
 
   const handleDelete = async (id) => {
     try {
       await userService.delete(id);
-      message.success(t('common.success'));
       fetchUsers();
     } catch (error) {
-      message.error(t('common.error'));
+      console.error('Error deleting user:', error);
     }
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      if (editingUser) {
-        await userService.update(editingUser.userId, values);
-      } else {
-        await userService.create(values);
-      }
-      message.success(t('common.success'));
-      setModalVisible(false);
-      fetchUsers();
-    } catch (error) {
-      message.error(t('common.error'));
+  const handleModalSuccess = () => {
+    setModalVisible(false);
+    fetchUsers();
+  };
+
+  const handleSearch = (searchText, role) => {
+    let filtered = users;
+    
+    if (searchText) {
+      filtered = filtered.filter(user =>
+        user.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchText.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchText.toLowerCase())
+      );
     }
+    
+    if (role) {
+      filtered = filtered.filter(user => user.role === role);
+    }
+    
+    setFilteredUsers(filtered);
   };
 
   useEffect(() => {
@@ -166,111 +91,22 @@ const Users = () => {
       </div>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={users}
+        <UserSearch onSearch={handleSearch} />
+        
+        <UserTable
+          users={filteredUsers}
           loading={loading}
-          rowKey="userId"
-          scroll={{ x: 800 }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </Card>
 
-      <Modal
-        title={editingUser ? t('users.editUser') : t('users.addUser')}
-        open={modalVisible}
+      <UserModal
+        visible={modalVisible}
+        editingUser={editingUser}
         onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="username"
-            label={t('auth.username')}
-            rules={[{ required: true, message: t('common.required') }]}
-          >
-            <Input disabled={!!editingUser} />
-          </Form.Item>
-
-          <Form.Item
-            name="fullName"
-            label={t('users.fullName')}
-            rules={[{ required: true, message: t('common.required') }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label={t('users.email')}
-            rules={[
-              { required: true, message: t('common.required') },
-              { type: 'email', message: 'Invalid email' },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
-          {!editingUser && (
-            <Form.Item
-              name="password"
-              label={t('auth.password')}
-              rules={[{ required: true, message: t('common.required') }]}
-            >
-              <Input.Password />
-            </Form.Item>
-          )}
-
-          <Form.Item
-            name="tel"
-            label={t('users.phone')}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="role"
-            label={t('users.role')}
-            rules={[{ required: true, message: t('common.required') }]}
-          >
-            <Select>
-              {roles.map(role => (
-                <Option key={role} value={role}>
-                  {t(`users.roles.${role}`)}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="telegram"
-            label={t('users.telegram')}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="memo"
-            label={t('users.memo')}
-          >
-            <Input.TextArea rows={3} />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                {t('common.save')}
-              </Button>
-              <Button onClick={() => setModalVisible(false)}>
-                {t('common.cancel')}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };
