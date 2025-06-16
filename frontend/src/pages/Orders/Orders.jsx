@@ -31,6 +31,7 @@ import {
   ClockCircleOutlined,
   PlusCircleOutlined,
   MinusCircleOutlined,
+  AppstoreAddOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -52,9 +53,11 @@ const Orders = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [itemsModalVisible, setItemsModalVisible] = useState(false);
+  const [bulkModalVisible, setBulkModalVisible] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
+  const [bulkItems, setBulkItems] = useState([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
   const [form] = Form.useForm();
   const [itemForm] = Form.useForm();
   const { t } = useTranslation();
@@ -126,7 +129,7 @@ const Orders = () => {
     {
       title: 'Amallar',
       key: 'actions',
-      width: 250,
+      width: 300,
       fixed: 'right',
       render: (_, record) => (
         <Space>
@@ -400,6 +403,60 @@ const Orders = () => {
     }
   };
 
+  // Bulk operations
+  const handleBulkAdd = () => {
+    setBulkItems([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
+    setBulkModalVisible(true);
+  };
+
+  const addBulkItem = () => {
+    setBulkItems([...bulkItems, { itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
+  };
+
+  const removeBulkItem = (index) => {
+    if (bulkItems.length > 1) {
+      const newItems = bulkItems.filter((_, i) => i !== index);
+      setBulkItems(newItems);
+    }
+  };
+
+  const updateBulkItem = (index, field, value) => {
+    const newItems = [...bulkItems];
+    newItems[index][field] = value;
+    setBulkItems(newItems);
+  };
+
+  const handleBulkSubmit = async () => {
+    try {
+      const validItems = bulkItems.filter(item => 
+        item.itemId && item.orderedQuantity > 0 && item.unitPrice >= 0
+      );
+
+      if (validItems.length === 0) {
+        message.error('Kamida bitta to\'liq ma\'lumot kiriting');
+        return;
+      }
+
+      const promises = validItems.map(item => 
+        orderService.addItem(selectedOrder.orderId, {
+          item: { itemId: item.itemId },
+          orderedQuantity: item.orderedQuantity,
+          unitPrice: item.unitPrice,
+        })
+      );
+
+      await Promise.all(promises);
+      message.success(`${validItems.length} ta xomashyo muvaffaqiyatli qo'shildi`);
+      setBulkModalVisible(false);
+      
+      // Refresh order items
+      const updatedItems = await orderService.getItems(selectedOrder.orderId);
+      setOrderItems(updatedItems);
+    } catch (error) {
+      message.error('Xatolik yuz berdi');
+    }
+  };
+
   const getStats = () => {
     const pendingCount = orders.filter(o => o.status === 'PENDING').length;
     const confirmedCount = orders.filter(o => o.status === 'CONFIRMED').length;
@@ -610,18 +667,31 @@ const Orders = () => {
         open={itemsModalVisible}
         onCancel={() => setItemsModalVisible(false)}
         footer={null}
-        width={1000}
+        width={1200}
       >
         <Tabs defaultActiveKey="1">
           <TabPane tab="Xomashyolar ro'yxati" key="1">
-            <div className="mb-4">
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleAddItem}
-              >
-                Xomashyo qo'shish
-              </Button>
+            <div className="mb-4 flex justify-between">
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddItem}
+                >
+                  Bitta qo'shish
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<AppstoreAddOutlined />}
+                  onClick={handleBulkAdd}
+                  style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                >
+                  Ommaviy qo'shish
+                </Button>
+              </Space>
+              <Text type="secondary">
+                Jami: {orderItems.length} ta xomashyo
+              </Text>
             </div>
             <Table
               columns={itemColumns}
@@ -631,7 +701,7 @@ const Orders = () => {
               size="small"
             />
           </TabPane>
-          <TabPane tab="Xomashyo qo'shish" key="2">
+          <TabPane tab="Bitta xomashyo qo'shish" key="2">
             <Form
               form={itemForm}
               layout="vertical"
@@ -692,6 +762,111 @@ const Orders = () => {
             </Form>
           </TabPane>
         </Tabs>
+      </Modal>
+
+      {/* Bulk Add Modal */}
+      <Modal
+        title="Xomashyolarni ommaviy qo'shish"
+        open={bulkModalVisible}
+        onCancel={() => setBulkModalVisible(false)}
+        footer={null}
+        width={1000}
+      >
+        <div className="mb-4">
+          <Text type="secondary">
+            Bir vaqtda ko'plab xomashyolarni buyurtmaga qo'shish uchun quyidagi jadvalni to'ldiring
+          </Text>
+        </div>
+
+        <div className="space-y-4">
+          {bulkItems.map((item, index) => (
+            <Card key={index} size="small" className="border-dashed">
+              <Row gutter={16} align="middle">
+                <Col span={8}>
+                  <Select
+                    placeholder="Xomashyoni tanlang"
+                    value={item.itemId}
+                    onChange={(value) => updateBulkItem(index, 'itemId', value)}
+                    className="w-full"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                  >
+                    {items.map(itemOption => (
+                      <Option key={itemOption.itemId} value={itemOption.itemId}>
+                        {itemOption.name} ({itemOption.code})
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col span={5}>
+                  <InputNumber
+                    placeholder="Miqdor"
+                    value={item.orderedQuantity}
+                    onChange={(value) => updateBulkItem(index, 'orderedQuantity', value)}
+                    min={0.001}
+                    step={0.001}
+                    className="w-full"
+                  />
+                </Col>
+                <Col span={5}>
+                  <InputNumber
+                    placeholder="Birlik narxi"
+                    value={item.unitPrice}
+                    onChange={(value) => updateBulkItem(index, 'unitPrice', value)}
+                    min={0}
+                    step={0.01}
+                    className="w-full"
+                  />
+                </Col>
+                <Col span={4}>
+                  <Text strong>
+                    ${((item.orderedQuantity || 0) * (item.unitPrice || 0)).toFixed(2)}
+                  </Text>
+                </Col>
+                <Col span={2}>
+                  <Button
+                    type="text"
+                    danger
+                    icon={<MinusCircleOutlined />}
+                    onClick={() => removeBulkItem(index)}
+                    disabled={bulkItems.length === 1}
+                  />
+                </Col>
+              </Row>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-4 flex justify-between items-center">
+          <Button
+            type="dashed"
+            icon={<PlusCircleOutlined />}
+            onClick={addBulkItem}
+          >
+            Xomashyo qo'shish
+          </Button>
+
+          <div>
+            <Text strong className="mr-4">
+              Jami: ${bulkItems.reduce((sum, item) => 
+                sum + ((item.orderedQuantity || 0) * (item.unitPrice || 0)), 0
+              ).toFixed(2)}
+            </Text>
+          </div>
+        </div>
+
+        <Divider />
+
+        <div className="flex justify-end space-x-2">
+          <Button onClick={() => setBulkModalVisible(false)}>
+            Bekor qilish
+          </Button>
+          <Button type="primary" onClick={handleBulkSubmit}>
+            Barchasini saqlash
+          </Button>
+        </div>
       </Modal>
     </div>
   );
