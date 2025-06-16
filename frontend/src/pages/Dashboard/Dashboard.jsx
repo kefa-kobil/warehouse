@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Typography, Table, Tag } from 'antd';
-import { UserOutlined, BoxPlotOutlined, ShoppingCartOutlined, TeamOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Statistic, Typography, Table, Tag, Spin, Alert } from 'antd';
+import { 
+  UserOutlined, 
+  BoxPlotOutlined, 
+  ShoppingCartOutlined, 
+  TeamOutlined,
+  SwapOutlined,
+  ShopOutlined,
+  InboxOutlined,
+  SendOutlined,
+  ToolOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { dashboardService } from '../../services/dashboardService';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -13,76 +24,162 @@ const Dashboard = () => {
     totalItems: 0,
     totalProducts: 0,
     totalClients: 0,
+    totalTransactions: 0,
+    recentTransactions: [],
   });
+  const [warehouseStats, setWarehouseStats] = useState([]);
+  const [transactionStats, setTransactionStats] = useState({
+    inboundCount: 0,
+    outboundCount: 0,
+    productionCount: 0,
+    totalValue: 0,
+    monthlyData: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [dashboardStats, warehouseData, transactionData] = await Promise.all([
+        dashboardService.getStats(),
+        dashboardService.getWarehouseStats(),
+        dashboardService.getTransactionStats(),
+      ]);
+
+      setStats(dashboardStats);
+      setWarehouseStats(warehouseData);
+      setTransactionStats(transactionData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const chartData = [
-    { name: t('navigation.users'), value: stats.totalUsers },
-    { name: t('navigation.items'), value: stats.totalItems },
-    { name: t('navigation.products'), value: stats.totalProducts },
-    { name: t('navigation.clients'), value: stats.totalClients },
+    { name: t('navigation.users'), value: stats.totalUsers, color: '#3f8600' },
+    { name: t('navigation.items'), value: stats.totalItems, color: '#cf1322' },
+    { name: t('navigation.products'), value: stats.totalProducts, color: '#1890ff' },
+    { name: t('navigation.clients'), value: stats.totalClients, color: '#722ed1' },
   ];
 
-  const recentActivities = [
+  const transactionChartData = [
+    { name: 'Kirish', value: transactionStats.inboundCount, color: '#52c41a' },
+    { name: 'Chiqish', value: transactionStats.outboundCount, color: '#ff4d4f' },
+    { name: 'Ishlab chiqarish', value: transactionStats.productionCount, color: '#1890ff' },
+  ];
+
+  const recentActivityColumns = [
     {
-      key: '1',
-      action: 'Yangi foydalanuvchi qo\'shildi',
-      user: 'Admin',
-      time: '2 daqiqa oldin',
-      status: 'success',
+      title: 'Turi',
+      dataIndex: 'transactionType',
+      key: 'transactionType',
+      render: (type) => {
+        const colors = {
+          INBOUND: 'green',
+          OUTBOUND: 'red',
+          PRODUCTION: 'blue',
+          TRANSFER: 'orange',
+          ADJUSTMENT: 'purple',
+        };
+        const labels = {
+          INBOUND: 'Kirish',
+          OUTBOUND: 'Chiqish',
+          PRODUCTION: 'Ishlab chiqarish',
+          TRANSFER: 'Ko\'chirish',
+          ADJUSTMENT: 'Tuzatish',
+        };
+        return <Tag color={colors[type]}>{labels[type]}</Tag>;
+      },
     },
     {
-      key: '2',
-      action: 'Mahsulot yangilandi',
-      user: 'Manager',
-      time: '5 daqiqa oldin',
-      status: 'info',
+      title: 'Obyekt',
+      key: 'entity',
+      render: (_, record) => {
+        if (record.entityType === 'ITEMS' && record.item) {
+          return record.item.name;
+        } else if (record.entityType === 'PRODUCTS' && record.product) {
+          return record.product.name;
+        }
+        return '-';
+      },
     },
     {
-      key: '3',
-      action: 'Xomashyo qo\'shildi',
-      user: 'Worker',
-      time: '10 daqiqa oldin',
-      status: 'success',
+      title: 'Miqdor',
+      dataIndex: 'quantity',
+      key: 'quantity',
+    },
+    {
+      title: 'Jami',
+      dataIndex: 'totalPrice',
+      key: 'totalPrice',
+      render: (price) => `$${price}`,
+    },
+    {
+      title: 'Sana',
+      dataIndex: 'transactionDate',
+      key: 'transactionDate',
+      render: (date) => new Date(date).toLocaleDateString('uz-UZ'),
     },
   ];
 
-  const columns = [
+  const warehouseColumns = [
     {
-      title: 'Amal',
-      dataIndex: 'action',
-      key: 'action',
+      title: 'Omborxona',
+      dataIndex: 'name',
+      key: 'name',
     },
     {
-      title: 'Foydalanuvchi',
-      dataIndex: 'user',
-      key: 'user',
+      title: 'Xomashyolar',
+      dataIndex: 'totalItems',
+      key: 'totalItems',
     },
     {
-      title: 'Vaqt',
-      dataIndex: 'time',
-      key: 'time',
+      title: 'Mahsulotlar',
+      dataIndex: 'totalProducts',
+      key: 'totalProducts',
     },
     {
-      title: 'Holat',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'success' ? 'green' : 'blue'}>
-          {status === 'success' ? 'Muvaffaqiyatli' : 'Ma\'lumot'}
-        </Tag>
-      ),
+      title: 'Jami qiymat',
+      dataIndex: 'totalValue',
+      key: 'totalValue',
+      render: (value) => `$${value.toFixed(2)}`,
     },
   ];
 
   useEffect(() => {
-    // Simulate loading stats
-    setStats({
-      totalUsers: 25,
-      totalItems: 150,
-      totalProducts: 75,
-      totalClients: 40,
-    });
+    fetchDashboardData();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        message="Xatolik"
+        description={error}
+        type="error"
+        showIcon
+        action={
+          <button 
+            onClick={fetchDashboardData}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Qayta urinish
+          </button>
+        }
+      />
+    );
+  }
 
   return (
     <div>
@@ -90,6 +187,7 @@ const Dashboard = () => {
         {t('dashboard.title')}
       </Title>
 
+      {/* Main Statistics */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} lg={6}>
           <Card>
@@ -133,9 +231,45 @@ const Dashboard = () => {
         </Col>
       </Row>
 
+      {/* Transaction Statistics */}
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="Kirish tranzaksiyalari"
+              value={transactionStats.inboundCount}
+              prefix={<InboxOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="Chiqish tranzaksiyalari"
+              value={transactionStats.outboundCount}
+              prefix={<SendOutlined />}
+              valueStyle={{ color: '#ff4d4f' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="Jami tranzaksiya qiymati"
+              value={transactionStats.totalValue}
+              prefix="$"
+              precision={2}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Charts and Tables */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title={t('dashboard.statistics')}>
+          <Card title={t('dashboard.statistics')} className="h-full">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -147,17 +281,78 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </Card>
         </Col>
+        
+        <Col xs={24} lg={12}>
+          <Card title="Tranzaksiya turlari" className="h-full">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={transactionChartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {transactionChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="mt-6">
         <Col xs={24} lg={12}>
           <Card title={t('dashboard.recentActivity')}>
             <Table
-              columns={columns}
-              dataSource={recentActivities}
+              columns={recentActivityColumns}
+              dataSource={stats.recentTransactions}
               pagination={false}
               size="small"
+              rowKey="transactionId"
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} lg={12}>
+          <Card title="Omborxona statistikasi">
+            <Table
+              columns={warehouseColumns}
+              dataSource={warehouseStats}
+              pagination={false}
+              size="small"
+              rowKey="warehouseId"
             />
           </Card>
         </Col>
       </Row>
+
+      {/* Monthly Transaction Chart */}
+      {transactionStats.monthlyData.length > 0 && (
+        <Row className="mt-6">
+          <Col span={24}>
+            <Card title="Oylik tranzaksiya statistikasi">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={transactionStats.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="inbound" fill="#52c41a" name="Kirish" />
+                  <Bar dataKey="outbound" fill="#ff4d4f" name="Chiqish" />
+                  <Bar dataKey="production" fill="#1890ff" name="Ishlab chiqarish" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };
