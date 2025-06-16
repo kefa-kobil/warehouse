@@ -11,6 +11,23 @@
   padding-left: 24px !important;
 }
 
+/* Desktop sidebar normal width */
+@media (min-width: 768px) {
+  .ant-layout-sider:not(.ant-layout-sider-collapsed) {
+    flex: 0 0 250px !important;
+    max-width: 250px !important;
+    min-width: 250px !important;
+    width: 250px !important;
+  }
+  
+  .ant-layout-sider.ant-layout-sider-collapsed {
+    flex: 0 0 80px !important;
+    max-width: 80px !important;
+    min-width: 80px !important;
+    width: 80px !important;
+  }
+}
+
 /* Mobile responsive improvements */
 @media (max-width: 768px) {
   .ant-layout-sider {
@@ -18,20 +35,11 @@
     height: 100vh;
     z-index: 1000;
     width: 250px !important;
+    flex: none !important;
   }
   
   .ant-layout-content {
     margin-left: 0 !important;
-  }
-  
-  .mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
   }
 
   /* Table responsive improvements */
@@ -42,11 +50,13 @@
   .ant-table-thead > tr > th {
     font-size: 12px !important;
     padding: 8px 4px !important;
+    white-space: nowrap;
   }
 
   .ant-table-tbody > tr > td {
     font-size: 12px !important;
     padding: 8px 4px !important;
+    white-space: nowrap;
   }
 
   /* Button responsive improvements */
@@ -215,4 +225,19 @@
   .ant-pagination-jump-next {
     display: none !important;
   }
+}
+
+/* Fix for sidebar width issues */
+.ant-layout-has-sider > .ant-layout, 
+.ant-layout-has-sider > .ant-layout-content {
+  overflow-x: hidden;
+}
+
+/* Ensure proper layout flow */
+.ant-layout {
+  background: #f0f2f5;
+}
+
+.ant-layout-content {
+  background: #f0f2f5;
 }
