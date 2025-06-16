@@ -70,25 +70,28 @@ const Orders = () => {
       title: 'Buyurtma raqami',
       dataIndex: 'orderNumber',
       key: 'orderNumber',
-      width: 140,
+      width: 120,
+      render: (text) => <span className="text-xs font-medium">{text}</span>,
     },
     {
       title: 'Ta\'minlovchi',
       dataIndex: 'supplier',
       key: 'supplier',
-      width: 150,
+      width: 120,
+      render: (text) => <span className="text-xs">{text}</span>,
     },
     {
       title: 'Omborxona',
       dataIndex: ['warehouse', 'name'],
       key: 'warehouse',
-      width: 120,
+      width: 100,
+      render: (text) => <span className="text-xs">{text}</span>,
     },
     {
       title: 'Holat',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 100,
       render: (status) => {
         const colors = {
           PENDING: 'orange',
@@ -102,43 +105,44 @@ const Orders = () => {
           RECEIVED: 'Qabul qilingan',
           CANCELLED: 'Bekor qilingan'
         };
-        return <Tag color={colors[status]}>{labels[status]}</Tag>;
+        return <Tag color={colors[status]} className="text-xs">{labels[status]}</Tag>;
       },
     },
     {
       title: 'Buyurtma sanasi',
       dataIndex: 'orderDate',
       key: 'orderDate',
-      width: 140,
-      render: (date) => dayjs(date).format('DD.MM.YYYY'),
+      width: 100,
+      render: (date) => <span className="text-xs">{dayjs(date).format('DD.MM.YYYY')}</span>,
     },
     {
       title: 'Qabul sanasi',
       dataIndex: 'receivedDate',
       key: 'receivedDate',
-      width: 140,
-      render: (date) => date ? dayjs(date).format('DD.MM.YYYY') : '-',
+      width: 100,
+      render: (date) => <span className="text-xs">{date ? dayjs(date).format('DD.MM.YYYY') : '-'}</span>,
     },
     {
       title: 'Jami summa',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      width: 120,
-      render: (amount) => `$${amount || 0}`,
+      width: 80,
+      render: (amount) => <span className="text-xs font-medium">${amount || 0}</span>,
     },
     {
       title: 'Amallar',
       key: 'actions',
-      width: 300,
+      width: 200,
       fixed: 'right',
       render: (_, record) => (
-        <Space>
+        <Space size="small" wrap>
           {record.status === 'PENDING' && (
             <Button
               type="primary"
               size="small"
               icon={<CheckCircleOutlined />}
               onClick={() => handleConfirm(record.orderId)}
+              className="text-xs"
             >
               Tasdiqlash
             </Button>
@@ -149,6 +153,7 @@ const Orders = () => {
               size="small"
               icon={<InboxOutlined />}
               onClick={() => handleReceive(record.orderId)}
+              className="text-xs"
             >
               Qabul qilish
             </Button>
@@ -156,6 +161,7 @@ const Orders = () => {
           <Button
             size="small"
             onClick={() => handleViewItems(record)}
+            className="text-xs"
           >
             Xomashyolar
           </Button>
@@ -164,6 +170,7 @@ const Orders = () => {
             size="small"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            className="text-xs"
           >
             Tahrirlash
           </Button>
@@ -178,6 +185,7 @@ const Orders = () => {
                 danger
                 size="small"
                 icon={<StopOutlined />}
+                className="text-xs"
               >
                 Bekor qilish
               </Button>
@@ -193,39 +201,44 @@ const Orders = () => {
       title: 'Xomashyo',
       dataIndex: ['item', 'name'],
       key: 'item',
+      render: (text) => <span className="text-xs">{text}</span>,
     },
     {
       title: 'Buyurtma miqdori',
       dataIndex: 'orderedQuantity',
       key: 'orderedQuantity',
+      render: (text) => <span className="text-xs">{text}</span>,
     },
     {
       title: 'Qabul qilingan',
       dataIndex: 'receivedQuantity',
       key: 'receivedQuantity',
+      render: (text) => <span className="text-xs">{text}</span>,
     },
     {
       title: 'Birlik narxi',
       dataIndex: 'unitPrice',
       key: 'unitPrice',
-      render: (price) => `$${price}`,
+      render: (price) => <span className="text-xs">${price}</span>,
     },
     {
       title: 'Jami narx',
       dataIndex: 'totalPrice',
       key: 'totalPrice',
-      render: (price) => `$${price}`,
+      render: (price) => <span className="text-xs font-medium">${price}</span>,
     },
     {
       title: 'Amallar',
       key: 'actions',
+      width: 120,
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             type="primary"
             size="small"
             icon={<EditOutlined />}
             onClick={() => handleEditItem(record)}
+            className="text-xs"
           >
             Tahrirlash
           </Button>
@@ -239,6 +252,7 @@ const Orders = () => {
               danger
               size="small"
               icon={<DeleteOutlined />}
+              className="text-xs"
             >
               O'chirish
             </Button>
@@ -484,58 +498,60 @@ const Orders = () => {
   }, []);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <Title level={2}>Buyurtmalar</Title>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+        <Title level={2} className="mb-0 text-lg sm:text-xl md:text-2xl">Buyurtmalar</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleAdd}
+          size="small"
+          className="w-full sm:w-auto"
         >
           Yangi buyurtma
         </Button>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} className="mb-6">
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+      <Row gutter={[8, 8]} className="mb-4 sm:mb-6">
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <Statistic
-              title="Kutilayotgan"
+              title={<span className="text-xs">Kutilayotgan</span>}
               value={stats.pendingCount}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              prefix={<ClockCircleOutlined className="text-sm" />}
+              valueStyle={{ color: '#fa8c16', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <Statistic
-              title="Tasdiqlangan"
+              title={<span className="text-xs">Tasdiqlangan</span>}
               value={stats.confirmedCount}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              prefix={<CheckCircleOutlined className="text-sm" />}
+              valueStyle={{ color: '#1890ff', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <Statistic
-              title="Qabul qilingan"
+              title={<span className="text-xs">Qabul qilingan</span>}
               value={stats.receivedCount}
-              prefix={<InboxOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              prefix={<InboxOutlined className="text-sm" />}
+              valueStyle={{ color: '#52c41a', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={6}>
+          <Card className="text-center">
             <Statistic
-              title="Jami summa"
+              title={<span className="text-xs">Jami summa</span>}
               value={stats.totalAmount}
               prefix="$"
               precision={2}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: '#722ed1', fontSize: '16px' }}
             />
           </Card>
         </Col>
@@ -547,12 +563,14 @@ const Orders = () => {
           dataSource={orders}
           loading={loading}
           rowKey="orderId"
-          scroll={{ x: 1400 }}
+          scroll={{ x: 800 }}
+          size="small"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+            responsive: true,
           }}
         />
       </Card>
@@ -563,15 +581,16 @@ const Orders = () => {
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
-        width={700}
+        width="95%"
+        style={{ maxWidth: 700 }}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <Row gutter={16}>
-            <Col span={12}>
+          <Row gutter={[8, 0]}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="supplier"
                 label="Ta'minlovchi"
@@ -580,7 +599,7 @@ const Orders = () => {
                 <Input placeholder="Ta'minlovchi nomini kiriting" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="warehouseId"
                 label="Omborxona"
@@ -597,8 +616,8 @@ const Orders = () => {
             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
+          <Row gutter={[8, 0]}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="userId"
                 label="Mas'ul shaxs"
@@ -613,7 +632,7 @@ const Orders = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="status"
                 label="Holat"
@@ -632,8 +651,8 @@ const Orders = () => {
             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
+          <Row gutter={[8, 0]}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="orderDate"
                 label="Buyurtma sanasi"
@@ -642,7 +661,7 @@ const Orders = () => {
                 <DatePicker className="w-full" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="receivedDate"
                 label="Qabul sanasi"
@@ -678,16 +697,18 @@ const Orders = () => {
         open={itemsModalVisible}
         onCancel={() => setItemsModalVisible(false)}
         footer={null}
-        width={1200}
+        width="95%"
+        style={{ maxWidth: 1200 }}
       >
         <Tabs defaultActiveKey="1">
           <TabPane tab="Xomashyolar ro'yxati" key="1">
-            <div className="mb-4 flex justify-between">
-              <Space>
+            <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
+              <Space wrap>
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={handleAddItem}
+                  size="small"
                 >
                   Bitta qo'shish
                 </Button>
@@ -696,11 +717,12 @@ const Orders = () => {
                   icon={<AppstoreAddOutlined />}
                   onClick={handleBulkAdd}
                   style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  size="small"
                 >
                   Ommaviy qo'shish
                 </Button>
               </Space>
-              <Text type="secondary">
+              <Text type="secondary" className="text-xs">
                 Jami: {orderItems.length} ta xomashyo
               </Text>
             </div>
@@ -710,6 +732,7 @@ const Orders = () => {
               rowKey="orderItemId"
               pagination={false}
               size="small"
+              scroll={{ x: 600 }}
             />
           </TabPane>
           <TabPane tab="Bitta xomashyo qo'shish" key="2">
@@ -739,8 +762,8 @@ const Orders = () => {
                 </Select>
               </Form.Item>
 
-              <Row gutter={16}>
-                <Col span={12}>
+              <Row gutter={[8, 0]}>
+                <Col xs={24} sm={12}>
                   <Form.Item
                     name="orderedQuantity"
                     label="Buyurtma miqdori"
@@ -749,7 +772,7 @@ const Orders = () => {
                     <InputNumber min={0.001} step={0.001} className="w-full" />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item
                     name="unitPrice"
                     label="Birlik narxi"
@@ -781,10 +804,11 @@ const Orders = () => {
         open={bulkModalVisible}
         onCancel={() => setBulkModalVisible(false)}
         footer={null}
-        width={1000}
+        width="95%"
+        style={{ maxWidth: 1000 }}
       >
         <div className="mb-4">
-          <Text type="secondary">
+          <Text type="secondary" className="text-xs">
             Bir vaqtda ko'plab xomashyolarni buyurtmaga qo'shish uchun quyidagi jadvalni to'ldiring
           </Text>
         </div>
@@ -792,14 +816,15 @@ const Orders = () => {
         <div className="space-y-4">
           {bulkItems.map((item, index) => (
             <Card key={index} size="small" className="border-dashed">
-              <Row gutter={16} align="middle">
-                <Col span={8}>
+              <Row gutter={[8, 8]} align="middle">
+                <Col xs={24} sm={10}>
                   <Select
                     placeholder="Xomashyoni tanlang"
                     value={item.itemId}
                     onChange={(value) => updateBulkItem(index, 'itemId', value)}
                     className="w-full"
                     showSearch
+                    size="small"
                     filterOption={(input, option) =>
                       option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                     }
@@ -811,7 +836,7 @@ const Orders = () => {
                     ))}
                   </Select>
                 </Col>
-                <Col span={5}>
+                <Col xs={12} sm={4}>
                   <InputNumber
                     placeholder="Miqdor"
                     value={item.orderedQuantity}
@@ -819,9 +844,10 @@ const Orders = () => {
                     min={0.001}
                     step={0.001}
                     className="w-full"
+                    size="small"
                   />
                 </Col>
-                <Col span={5}>
+                <Col xs={12} sm={4}>
                   <InputNumber
                     placeholder="Birlik narxi"
                     value={item.unitPrice}
@@ -829,20 +855,22 @@ const Orders = () => {
                     min={0}
                     step={0.01}
                     className="w-full"
+                    size="small"
                   />
                 </Col>
-                <Col span={4}>
-                  <Text strong>
+                <Col xs={12} sm={4}>
+                  <Text strong className="text-xs">
                     ${((item.orderedQuantity || 0) * (item.unitPrice || 0)).toFixed(2)}
                   </Text>
                 </Col>
-                <Col span={2}>
+                <Col xs={12} sm={2}>
                   <Button
                     type="text"
                     danger
                     icon={<MinusCircleOutlined />}
                     onClick={() => removeBulkItem(index)}
                     disabled={bulkItems.length === 1}
+                    size="small"
                   />
                 </Col>
               </Row>
@@ -850,17 +878,18 @@ const Orders = () => {
           ))}
         </div>
 
-        <div className="mt-4 flex justify-between items-center">
+        <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <Button
             type="dashed"
             icon={<PlusCircleOutlined />}
             onClick={addBulkItem}
+            size="small"
           >
             Xomashyo qo'shish
           </Button>
 
           <div>
-            <Text strong className="mr-4">
+            <Text strong className="text-sm">
               Jami: ${bulkItems.reduce((sum, item) => 
                 sum + ((item.orderedQuantity || 0) * (item.unitPrice || 0)), 0
               ).toFixed(2)}
@@ -871,10 +900,10 @@ const Orders = () => {
         <Divider />
 
         <div className="flex justify-end space-x-2">
-          <Button onClick={() => setBulkModalVisible(false)}>
+          <Button onClick={() => setBulkModalVisible(false)} size="small">
             Bekor qilish
           </Button>
-          <Button type="primary" onClick={handleBulkSubmit}>
+          <Button type="primary" onClick={handleBulkSubmit} size="small">
             Barchasini saqlash
           </Button>
         </div>

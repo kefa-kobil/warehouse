@@ -11,12 +11,13 @@
   padding-left: 24px !important;
 }
 
-/* Responsive adjustments */
+/* Mobile responsive improvements */
 @media (max-width: 768px) {
   .ant-layout-sider {
     position: fixed !important;
     height: 100vh;
     z-index: 1000;
+    width: 250px !important;
   }
   
   .ant-layout-content {
@@ -32,11 +33,102 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
   }
+
+  /* Table responsive improvements */
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .ant-table-thead > tr > th {
+    font-size: 12px !important;
+    padding: 8px 4px !important;
+  }
+
+  .ant-table-tbody > tr > td {
+    font-size: 12px !important;
+    padding: 8px 4px !important;
+  }
+
+  /* Button responsive improvements */
+  .ant-btn-sm {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    height: auto !important;
+  }
+
+  /* Modal responsive improvements */
+  .ant-modal {
+    margin: 10px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  .ant-modal-content {
+    border-radius: 8px;
+  }
+
+  /* Form responsive improvements */
+  .ant-form-item-label {
+    font-size: 12px !important;
+  }
+
+  .ant-input, .ant-select-selector, .ant-picker {
+    font-size: 12px !important;
+  }
+
+  /* Card responsive improvements */
+  .ant-card-head-title {
+    font-size: 14px !important;
+  }
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  /* Statistics responsive improvements */
+  .ant-statistic-title {
+    font-size: 11px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 14px !important;
+  }
+
+  /* Space responsive improvements */
+  .ant-space-item {
+    margin-bottom: 4px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Extra small screens */
+  .ant-table-thead > tr > th {
+    font-size: 10px !important;
+    padding: 6px 2px !important;
+  }
+
+  .ant-table-tbody > tr > td {
+    font-size: 10px !important;
+    padding: 6px 2px !important;
+  }
+
+  .ant-btn-sm {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+  }
+
+  .ant-card-body {
+    padding: 8px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 12px !important;
+  }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -66,4 +158,61 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Responsive text utilities */
+.text-responsive {
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .text-responsive {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .text-responsive {
+    font-size: 10px;
+  }
+}
+
+/* Responsive spacing utilities */
+.space-y-responsive > * + * {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .space-y-responsive > * + * {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Responsive grid improvements */
+@media (max-width: 768px) {
+  .ant-col {
+    margin-bottom: 8px;
+  }
+}
+
+/* Responsive table actions */
+@media (max-width: 768px) {
+  .ant-table-fixed-right {
+    position: sticky !important;
+    right: 0;
+    background: white;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+  }
+}
+
+/* Responsive pagination */
+@media (max-width: 576px) {
+  .ant-pagination-options {
+    display: none !important;
+  }
+  
+  .ant-pagination-jump-prev,
+  .ant-pagination-jump-next {
+    display: none !important;
+  }
 }

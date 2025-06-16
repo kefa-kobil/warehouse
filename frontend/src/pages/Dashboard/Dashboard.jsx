@@ -77,6 +77,7 @@ const Dashboard = () => {
       title: 'Turi',
       dataIndex: 'transactionType',
       key: 'transactionType',
+      width: 80,
       render: (type) => {
         const colors = {
           INBOUND: 'green',
@@ -92,17 +93,18 @@ const Dashboard = () => {
           TRANSFER: 'Ko\'chirish',
           ADJUSTMENT: 'Tuzatish',
         };
-        return <Tag color={colors[type]}>{labels[type]}</Tag>;
+        return <Tag color={colors[type]} className="text-xs">{labels[type]}</Tag>;
       },
     },
     {
       title: 'Obyekt',
       key: 'entity',
+      width: 120,
       render: (_, record) => {
         if (record.entityType === 'ITEMS' && record.item) {
-          return record.item.name;
+          return <span className="text-xs">{record.item.name}</span>;
         } else if (record.entityType === 'PRODUCTS' && record.product) {
-          return record.product.name;
+          return <span className="text-xs">{record.product.name}</span>;
         }
         return '-';
       },
@@ -111,18 +113,22 @@ const Dashboard = () => {
       title: 'Miqdor',
       dataIndex: 'quantity',
       key: 'quantity',
+      width: 60,
+      render: (quantity) => <span className="text-xs">{quantity}</span>,
     },
     {
       title: 'Jami',
       dataIndex: 'totalPrice',
       key: 'totalPrice',
-      render: (price) => `$${price}`,
+      width: 70,
+      render: (price) => <span className="text-xs">${price}</span>,
     },
     {
       title: 'Sana',
       dataIndex: 'transactionDate',
       key: 'transactionDate',
-      render: (date) => new Date(date).toLocaleDateString('uz-UZ'),
+      width: 80,
+      render: (date) => <span className="text-xs">{new Date(date).toLocaleDateString('uz-UZ')}</span>,
     },
   ];
 
@@ -131,22 +137,29 @@ const Dashboard = () => {
       title: 'Omborxona',
       dataIndex: 'name',
       key: 'name',
+      width: 100,
+      render: (name) => <span className="text-xs font-medium">{name}</span>,
     },
     {
       title: 'Xomashyolar',
       dataIndex: 'totalItems',
       key: 'totalItems',
+      width: 80,
+      render: (count) => <span className="text-xs">{count}</span>,
     },
     {
       title: 'Mahsulotlar',
       dataIndex: 'totalProducts',
       key: 'totalProducts',
+      width: 80,
+      render: (count) => <span className="text-xs">{count}</span>,
     },
     {
       title: 'Jami qiymat',
       dataIndex: 'totalValue',
       key: 'totalValue',
-      render: (value) => `$${value.toFixed(2)}`,
+      width: 80,
+      render: (value) => <span className="text-xs">${value.toFixed(2)}</span>,
     },
   ];
 
@@ -182,99 +195,99 @@ const Dashboard = () => {
   }
 
   return (
-    <div>
-      <Title level={2} className="mb-6">
+    <div className="space-y-4 sm:space-y-6">
+      <Title level={2} className="mb-4 sm:mb-6 text-lg sm:text-xl md:text-2xl">
         {t('dashboard.title')}
       </Title>
 
       {/* Main Statistics */}
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+      <Row gutter={[8, 8]} className="mb-4 sm:mb-6">
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="text-center">
             <Statistic
-              title={t('dashboard.totalUsers')}
+              title={<span className="text-xs sm:text-sm">{t('dashboard.totalUsers')}</span>}
               value={stats.totalUsers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              prefix={<UserOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#3f8600', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="text-center">
             <Statistic
-              title={t('dashboard.totalItems')}
+              title={<span className="text-xs sm:text-sm">{t('dashboard.totalItems')}</span>}
               value={stats.totalItems}
-              prefix={<BoxPlotOutlined />}
-              valueStyle={{ color: '#cf1322' }}
+              prefix={<BoxPlotOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#cf1322', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="text-center">
             <Statistic
-              title={t('dashboard.totalProducts')}
+              title={<span className="text-xs sm:text-sm">{t('dashboard.totalProducts')}</span>}
               value={stats.totalProducts}
-              prefix={<ShoppingCartOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              prefix={<ShoppingCartOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#1890ff', fontSize: '16px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="text-center">
             <Statistic
-              title={t('dashboard.totalClients')}
+              title={<span className="text-xs sm:text-sm">{t('dashboard.totalClients')}</span>}
               value={stats.totalClients}
-              prefix={<TeamOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              prefix={<TeamOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#722ed1', fontSize: '16px' }}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Transaction Statistics */}
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={8}>
-          <Card>
+      <Row gutter={[8, 8]} className="mb-4 sm:mb-6">
+        <Col xs={8} sm={8}>
+          <Card className="text-center">
             <Statistic
-              title="Kirish tranzaksiyalari"
+              title={<span className="text-xs sm:text-sm">Kirish tranzaksiyalari</span>}
               value={transactionStats.inboundCount}
-              prefix={<InboxOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              prefix={<InboxOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#52c41a', fontSize: '14px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={8}>
-          <Card>
+        <Col xs={8} sm={8}>
+          <Card className="text-center">
             <Statistic
-              title="Chiqish tranzaksiyalari"
+              title={<span className="text-xs sm:text-sm">Chiqish tranzaksiyalari</span>}
               value={transactionStats.outboundCount}
-              prefix={<SendOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
+              prefix={<SendOutlined className="text-sm sm:text-base" />}
+              valueStyle={{ color: '#ff4d4f', fontSize: '14px' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={8}>
-          <Card>
+        <Col xs={8} sm={8}>
+          <Card className="text-center">
             <Statistic
-              title="Jami tranzaksiya qiymati"
+              title={<span className="text-xs sm:text-sm">Jami qiymat</span>}
               value={transactionStats.totalValue}
               prefix="$"
               precision={2}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#1890ff', fontSize: '14px' }}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Charts and Tables */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[8, 8]}>
         <Col xs={24} lg={12}>
-          <Card title={t('dashboard.statistics')} className="h-full">
-            <ResponsiveContainer width="100%" height={300}>
+          <Card title={<span className="text-sm sm:text-base">{t('dashboard.statistics')}</span>} className="h-full">
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Bar dataKey="value" fill="#0ea5e9" />
               </BarChart>
@@ -283,8 +296,8 @@ const Dashboard = () => {
         </Col>
         
         <Col xs={24} lg={12}>
-          <Card title="Tranzaksiya turlari" className="h-full">
-            <ResponsiveContainer width="100%" height={300}>
+          <Card title={<span className="text-sm sm:text-base">Tranzaksiya turlari</span>} className="h-full">
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={transactionChartData}
@@ -307,27 +320,29 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} className="mt-6">
+      <Row gutter={[8, 8]} className="mt-4 sm:mt-6">
         <Col xs={24} lg={12}>
-          <Card title={t('dashboard.recentActivity')}>
+          <Card title={<span className="text-sm sm:text-base">{t('dashboard.recentActivity')}</span>}>
             <Table
               columns={recentActivityColumns}
               dataSource={stats.recentTransactions}
               pagination={false}
               size="small"
               rowKey="transactionId"
+              scroll={{ x: 400 }}
             />
           </Card>
         </Col>
         
         <Col xs={24} lg={12}>
-          <Card title="Omborxona statistikasi">
+          <Card title={<span className="text-sm sm:text-base">Omborxona statistikasi</span>}>
             <Table
               columns={warehouseColumns}
               dataSource={warehouseStats}
               pagination={false}
               size="small"
               rowKey="warehouseId"
+              scroll={{ x: 350 }}
             />
           </Card>
         </Col>
@@ -335,14 +350,14 @@ const Dashboard = () => {
 
       {/* Monthly Transaction Chart */}
       {transactionStats.monthlyData.length > 0 && (
-        <Row className="mt-6">
+        <Row className="mt-4 sm:mt-6">
           <Col span={24}>
-            <Card title="Oylik tranzaksiya statistikasi">
+            <Card title={<span className="text-sm sm:text-base">Oylik tranzaksiya statistikasi</span>}>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={transactionStats.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
                   <Bar dataKey="inbound" fill="#52c41a" name="Kirish" />
                   <Bar dataKey="outbound" fill="#ff4d4f" name="Chiqish" />

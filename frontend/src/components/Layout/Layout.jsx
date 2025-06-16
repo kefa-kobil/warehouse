@@ -134,7 +134,7 @@ const Layout = ({ children }) => {
       {/* Mobile overlay */}
       {mobileMenuVisible && (
         <div 
-          className="mobile-menu-overlay md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setMobileMenuVisible(false)}
         />
       )}
@@ -143,11 +143,12 @@ const Layout = ({ children }) => {
         trigger={null}
         collapsible
         collapsed={collapsed}
-        className={`${mobileMenuVisible ? 'block' : 'hidden'} md:block`}
+        className={`${mobileMenuVisible ? 'block' : 'hidden'} md:block fixed md:relative z-50 h-full`}
         breakpoint="md"
         collapsedWidth={window.innerWidth < 768 ? 0 : 80}
+        width={250}
       >
-        <div className="h-16 flex items-center justify-center bg-primary-600 text-white font-bold text-lg">
+        <div className="h-16 flex items-center justify-center bg-primary-600 text-white font-bold text-lg px-4">
           {collapsed ? 'WMS' : 'Warehouse MS'}
         </div>
         <Menu
@@ -156,11 +157,12 @@ const Layout = ({ children }) => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={handleMenuClick}
+          className="border-r-0"
         />
       </Sider>
 
-      <AntLayout>
-        <Header className="bg-white shadow-sm px-4 flex items-center justify-between">
+      <AntLayout className={`${mobileMenuVisible ? 'md:ml-0' : ''}`}>
+        <Header className="bg-white shadow-sm px-4 flex items-center justify-between sticky top-0 z-30">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -174,23 +176,23 @@ const Layout = ({ children }) => {
             className="text-lg"
           />
 
-          <Space>
+          <Space size="small">
             <Dropdown menu={languageMenu} placement="bottomRight">
-              <Button type="text" icon={<GlobalOutlined />}>
+              <Button type="text" icon={<GlobalOutlined />} size="small">
                 {i18n.language === 'uz-Cyrl' ? 'Кир' : 'Lat'}
               </Button>
             </Dropdown>
 
             <Dropdown menu={userMenu} placement="bottomRight">
               <Space className="cursor-pointer">
-                <Avatar icon={<UserOutlined />} />
-                <span className="hidden sm:inline">{user?.fullName}</span>
+                <Avatar icon={<UserOutlined />} size="small" />
+                <span className="hidden sm:inline text-sm">{user?.fullName}</span>
               </Space>
             </Dropdown>
           </Space>
         </Header>
 
-        <Content className="m-6 p-6 bg-white rounded-lg shadow-sm min-h-[calc(100vh-112px)]">
+        <Content className="m-2 sm:m-4 md:m-6 p-3 sm:p-4 md:p-6 bg-white rounded-lg shadow-sm min-h-[calc(100vh-112px)] overflow-auto">
           {children}
         </Content>
       </AntLayout>
