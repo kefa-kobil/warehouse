@@ -262,7 +262,8 @@ const Orders = () => {
       setUsers(usersData);
       setItems(itemsData);
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Ma\'lumotlarni yuklashda xatolik:', error);
+      message.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -303,14 +304,16 @@ const Orders = () => {
       
       if (editingOrder) {
         await orderService.update(editingOrder.orderId, payload);
+        message.success('Buyurtma muvaffaqiyatli yangilandi');
       } else {
         await orderService.create(payload);
+        message.success('Buyurtma muvaffaqiyatli yaratildi');
       }
-      message.success('Muvaffaqiyatli saqlandi');
       setModalVisible(false);
       fetchData();
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Buyurtmani saqlashda xatolik:', error);
+      message.error('Buyurtmani saqlashda xatolik yuz berdi');
     }
   };
 
@@ -320,7 +323,8 @@ const Orders = () => {
       message.success('Buyurtma tasdiqlandi');
       fetchData();
     } catch (error) {
-      message.error(error.response?.data?.message || 'Xatolik yuz berdi');
+      console.error('Buyurtmani tasdiqlashda xatolik:', error);
+      message.error(error.response?.data?.message || 'Buyurtmani tasdiqlashda xatolik yuz berdi');
     }
   };
 
@@ -330,7 +334,8 @@ const Orders = () => {
       message.success('Buyurtma qabul qilindi va omborga qo\'shildi');
       fetchData();
     } catch (error) {
-      message.error(error.response?.data?.message || 'Xatolik yuz berdi');
+      console.error('Buyurtmani qabul qilishda xatolik:', error);
+      message.error(error.response?.data?.message || 'Buyurtmani qabul qilishda xatolik yuz berdi');
     }
   };
 
@@ -340,7 +345,8 @@ const Orders = () => {
       message.success('Buyurtma bekor qilindi');
       fetchData();
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Buyurtmani bekor qilishda xatolik:', error);
+      message.error('Buyurtmani bekor qilishda xatolik yuz berdi');
     }
   };
 
@@ -351,7 +357,8 @@ const Orders = () => {
       setOrderItems(items);
       setItemsModalVisible(true);
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Buyurtma xomashyolarini yuklashda xatolik:', error);
+      message.error('Buyurtma xomashyolarini yuklashda xatolik yuz berdi');
     }
   };
 
@@ -379,16 +386,18 @@ const Orders = () => {
 
       if (values.editing) {
         await orderService.updateItem(values.editingId, payload);
+        message.success('Xomashyo muvaffaqiyatli yangilandi');
       } else {
         await orderService.addItem(selectedOrder.orderId, payload);
+        message.success('Xomashyo muvaffaqiyatli qo\'shildi');
       }
 
-      message.success('Muvaffaqiyatli saqlandi');
       const updatedItems = await orderService.getItems(selectedOrder.orderId);
       setOrderItems(updatedItems);
       itemForm.resetFields();
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Xomashyoni saqlashda xatolik:', error);
+      message.error('Xomashyoni saqlashda xatolik yuz berdi');
     }
   };
 
@@ -399,7 +408,8 @@ const Orders = () => {
       const updatedItems = await orderService.getItems(selectedOrder.orderId);
       setOrderItems(updatedItems);
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Xomashyoni o\'chirishda xatolik:', error);
+      message.error('Xomashyoni o\'chirishda xatolik yuz berdi');
     }
   };
 
@@ -453,7 +463,8 @@ const Orders = () => {
       const updatedItems = await orderService.getItems(selectedOrder.orderId);
       setOrderItems(updatedItems);
     } catch (error) {
-      message.error('Xatolik yuz berdi');
+      console.error('Ommaviy qo\'shishda xatolik:', error);
+      message.error('Ommaviy qo\'shishda xatolik yuz berdi');
     }
   };
 

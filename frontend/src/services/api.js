@@ -24,11 +24,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor - FAQAT 401 xatolikda logout qilish
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Faqat authentication xatolikda logout qilish
+    if (error.response?.status === 401 && 
+        error.response?.data?.message?.includes('authentication')) {
       useAuthStore.getState().logout();
       window.location.href = '/login';
     }
