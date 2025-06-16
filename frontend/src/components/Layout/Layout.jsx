@@ -15,6 +15,7 @@ import {
   TeamOutlined,
   SwapOutlined,
   ToolOutlined,
+  ShoppingOutlined,
   LogoutOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
@@ -65,6 +66,11 @@ const Layout = ({ children }) => {
       key: '/products',
       icon: <ShoppingCartOutlined />,
       label: t('navigation.products'),
+    },
+    {
+      key: '/orders',
+      icon: <ShoppingOutlined />,
+      label: 'Buyurtmalar',
     },
     {
       key: '/production',
