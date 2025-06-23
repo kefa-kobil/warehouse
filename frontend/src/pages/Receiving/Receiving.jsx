@@ -69,6 +69,7 @@ const Receiving = () => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [receiptItems, setReceiptItems] = useState([]);
   const [bulkItems, setBulkItems] = useState([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
+  const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
   const [itemForm] = Form.useForm();
   const { t } = useTranslation();
@@ -170,6 +171,7 @@ const Receiving = () => {
               icon={<InboxOutlined />}
               onClick={() => handleReceive(record.receiptId)}
               className="text-xs bg-green-500 border-green-500"
+              loading={loading}
             >
               Qabul qilish
             </Button>
@@ -180,6 +182,7 @@ const Receiving = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             className="text-xs"
+            disabled={record.status !== 'PENDING'}
           >
             Tahrirlash
           </Button>
@@ -269,6 +272,7 @@ const Receiving = () => {
             icon={<EditOutlined />}
             onClick={() => handleEditItem(record)}
             className="text-xs"
+            disabled={selectedReceipt?.status !== 'PENDING'}
           >
             Tahrirlash
           </Button>
@@ -283,6 +287,7 @@ const Receiving = () => {
               size="small"
               icon={<DeleteOutlined />}
               className="text-xs"
+              disabled={selectedReceipt?.status !== 'PENDING'}
             >
               O'chirish
             </Button>
@@ -412,14 +417,36 @@ const Receiving = () => {
   };
 
   const handleReceive = async (id) => {
+    // Optimistically update the UI
+    setReceipts(prevReceipts => 
+      prevReceipts.map(receipt => 
+        receipt.receiptId === id ? { ...receipt, status: 'RECEIVED' } : receipt
+      )
+    );
+
+    // Update selected receipt if it's the one being received
+    if (selectedReceipt && selectedReceipt.receiptId === id) {
+      setSelectedReceipt(prev => ({ ...prev, status: 'RECEIVED' }));
+    }
+
     setLoading(true);
     try {
       await materialReceiptService.receive(id);
       message.success('Qabul qilindi va omborga qo\'shildi');
+      
+      // Refresh data to get accurate information
       fetchData();
+      
+      // If drawer is open for this receipt, refresh its items
+      if (selectedReceipt && selectedReceipt.receiptId === id) {
+        const updatedItems = await materialReceiptService.getItems(id);
+        setReceiptItems(updatedItems);
+      }
     } catch (error) {
       console.error('Qabulni qabul qilishda xatolik:', error);
       message.error('Qabulni qabul qilishda xatolik yuz berdi: ' + error.message);
+      // Revert the optimistic update
+      fetchData();
     } finally {
       setLoading(false);
     }
@@ -432,6 +459,7 @@ const Receiving = () => {
       const items = await materialReceiptService.getItems(receipt.receiptId);
       setReceiptItems(items);
       setItemsDrawerVisible(true);
+      setActiveTab('1');
     } catch (error) {
       console.error('Qabul xomashyolarini yuklashda xatolik:', error);
       message.error('Qabul xomashyolarini yuklashda xatolik yuz berdi: ' + error.message);
@@ -447,6 +475,7 @@ const Receiving = () => {
     }
     itemForm.resetFields();
     itemForm.setFieldsValue({ editing: false });
+    setActiveTab('2');
   };
 
   const handleEditItem = (item) => {
@@ -456,6 +485,7 @@ const Receiving = () => {
       editing: true,
       editingId: item.receiptItemId,
     });
+    setActiveTab('2');
   };
 
   const handleItemSubmit = async (values) => {
@@ -478,6 +508,7 @@ const Receiving = () => {
       const updatedItems = await materialReceiptService.getItems(selectedReceipt.receiptId);
       setReceiptItems(updatedItems);
       itemForm.resetFields();
+      setActiveTab('1');
     } catch (error) {
       console.error('Xomashyoni saqlashda xatolik:', error);
       message.error('Xomashyoni saqlashda xatolik yuz berdi: ' + error.message);
@@ -822,109 +853,187 @@ const Receiving = () => {
         style={{ maxWidth: 1200 }}
       >
         {selectedReceipt && (
-          <div className="space-y-4">
-            {/* Receipt Info */}
-            <Card size="small">
-              <Row gutter={[16, 8]}>
-                <Col xs={12} sm={6}>
-                  <Text type="secondary" className="text-xs">Qabul raqami:</Text>
-                  <div><Text strong className="text-sm">{selectedReceipt.receiptNumber || 'N/A'}</Text></div>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Text type="secondary" className="text-xs">Ta'minlovchi:</Text>
-                  <div><Text className="text-sm">{selectedReceipt.supplier || 'N/A'}</Text></div>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Text type="secondary" className="text-xs">Qabul sanasi:</Text>
-                  <div>
-                    <Text className="text-sm">
-                      {selectedReceipt.receiptDate ? dayjs(selectedReceipt.receiptDate).format('DD.MM.YYYY') : 'N/A'}
-                    </Text>
-                  </div>
-                </Col>
-                <Col xs={12} sm={6}>
-                  <Text type="secondary" className="text-xs">Jami summa:</Text>
-                  <div>
-                    <Text strong className="text-sm text-green-600">
-                      {selectedReceipt.totalAmount ? `${Number(selectedReceipt.totalAmount).toLocaleString()} so'm` : '0 so\'m'}
-                    </Text>
-                  </div>
-                </Col>
-              </Row>
-            </Card>
+          <Tabs activeKey={activeTab} onChange={setActiveTab}>
+            <TabPane tab="Xomashyolar ro'yxati" key="1">
+              {/* Receipt Info */}
+              <Card size="small" className="mb-4">
+                <Row gutter={[16, 8]}>
+                  <Col xs={12} sm={6}>
+                    <Text type="secondary" className="text-xs">Qabul raqami:</Text>
+                    <div><Text strong className="text-sm">{selectedReceipt.receiptNumber || 'N/A'}</Text></div>
+                  </Col>
+                  <Col xs={12} sm={6}>
+                    <Text type="secondary" className="text-xs">Ta'minlovchi:</Text>
+                    <div><Text className="text-sm">{selectedReceipt.supplier || 'N/A'}</Text></div>
+                  </Col>
+                  <Col xs={12} sm={6}>
+                    <Text type="secondary" className="text-xs">Qabul sanasi:</Text>
+                    <div>
+                      <Text className="text-sm">
+                        {selectedReceipt.receiptDate ? dayjs(selectedReceipt.receiptDate).format('DD.MM.YYYY') : 'N/A'}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col xs={12} sm={6}>
+                    <Text type="secondary" className="text-xs">Jami summa:</Text>
+                    <div>
+                      <Text strong className="text-sm text-green-600">
+                        {selectedReceipt.totalAmount ? `${Number(selectedReceipt.totalAmount).toLocaleString()} so'm` : '0 so\'m'}
+                      </Text>
+                    </div>
+                  </Col>
+                </Row>
+              </Card>
 
-            {/* Action Buttons */}
-            <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
-              <Space wrap>
-                <Button
-                  type="primary"
-                  icon={<AppstoreAddOutlined />}
-                  onClick={handleBulkAdd}
-                  style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                  size="small"
-                  disabled={items.length === 0}
-                >
-                  Xomashyolar qo'shish
-                </Button>
-                {selectedReceipt.status === 'PENDING' && (
+              {/* Action Buttons */}
+              <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
+                <Space wrap>
                   <Button
                     type="primary"
-                    icon={<InboxOutlined />}
-                    onClick={() => handleReceive(selectedReceipt.receiptId)}
+                    icon={<PlusOutlined />}
+                    onClick={handleAddItem}
+                    size="small"
+                    disabled={items.length === 0 || selectedReceipt.status !== 'PENDING'}
+                  >
+                    Xomashyo qo'shish
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<AppstoreAddOutlined />}
+                    onClick={handleBulkAdd}
                     style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                     size="small"
-                    loading={loading}
+                    disabled={items.length === 0 || selectedReceipt.status !== 'PENDING'}
                   >
-                    Qabul qilish
+                    Xomashyolar qo'shish
                   </Button>
-                )}
-              </Space>
-              <Text type="secondary" className="text-xs">
-                Jami: {receiptItems.length} ta xomashyo
-              </Text>
-            </div>
+                  {selectedReceipt.status === 'PENDING' && (
+                    <Button
+                      type="primary"
+                      icon={<InboxOutlined />}
+                      onClick={() => handleReceive(selectedReceipt.receiptId)}
+                      style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                      size="small"
+                      loading={loading}
+                    >
+                      Qabul qilish
+                    </Button>
+                  )}
+                </Space>
+                <Text type="secondary" className="text-xs">
+                  Jami: {receiptItems.length} ta xomashyo
+                </Text>
+              </div>
 
-            {/* Items Table */}
-            {receiptItems.length > 0 ? (
-              <Table
-                columns={itemColumns}
-                dataSource={receiptItems}
-                rowKey="receiptItemId"
-                pagination={false}
-                size="small"
-                scroll={{ x: 600 }}
-                loading={loading}
-                summary={(pageData) => {
-                  const totalAmount = pageData.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
-                  const totalQuantity = pageData.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
-                  
-                  return (
-                    <Table.Summary.Row>
-                      <Table.Summary.Cell index={0}>
-                        <Text strong className="text-xs">Jami:</Text>
-                      </Table.Summary.Cell>
-                      <Table.Summary.Cell index={1}>
-                        <Text strong className="text-xs">{totalQuantity}</Text>
-                      </Table.Summary.Cell>
-                      <Table.Summary.Cell index={2}>-</Table.Summary.Cell>
-                      <Table.Summary.Cell index={3}>-</Table.Summary.Cell>
-                      <Table.Summary.Cell index={4}>
-                        <Text strong className="text-xs text-green-600">
-                          {totalAmount.toLocaleString()} so'm
-                        </Text>
-                      </Table.Summary.Cell>
-                      <Table.Summary.Cell index={5}>-</Table.Summary.Cell>
-                    </Table.Summary.Row>
-                  );
-                }}
-              />
-            ) : (
-              <Empty 
-                description="Bu qabulda hozircha xomashyolar yo'q"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            )}
-          </div>
+              {/* Items Table */}
+              {receiptItems.length > 0 ? (
+                <Table
+                  columns={itemColumns}
+                  dataSource={receiptItems}
+                  rowKey="receiptItemId"
+                  pagination={false}
+                  size="small"
+                  scroll={{ x: 600 }}
+                  loading={loading}
+                  summary={(pageData) => {
+                    const totalAmount = pageData.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+                    const totalQuantity = pageData.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
+                    
+                    return (
+                      <Table.Summary.Row>
+                        <Table.Summary.Cell index={0}>
+                          <Text strong className="text-xs">Jami:</Text>
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={1}>
+                          <Text strong className="text-xs">{totalQuantity}</Text>
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={2}>-</Table.Summary.Cell>
+                        <Table.Summary.Cell index={3}>-</Table.Summary.Cell>
+                        <Table.Summary.Cell index={4}>
+                          <Text strong className="text-xs text-green-600">
+                            {totalAmount.toLocaleString()} so'm
+                          </Text>
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={5}>-</Table.Summary.Cell>
+                      </Table.Summary.Row>
+                    );
+                  }}
+                />
+              ) : (
+                <Empty 
+                  description="Bu qabulda hozircha xomashyolar yo'q"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              )}
+            </TabPane>
+            
+            <TabPane tab="Xomashyo qo'shish" key="2">
+              <Form
+                form={itemForm}
+                layout="vertical"
+                onFinish={handleItemSubmit}
+              >
+                <Form.Item name="editing" hidden>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="editingId" hidden>
+                  <Input />
+                </Form.Item>
+
+                <Form.Item
+                  name="itemId"
+                  label="Xomashyo"
+                  rules={[{ required: true, message: 'Xomashyoni tanlang' }]}
+                >
+                  <Select placeholder="Xomashyoni tanlang" showSearch>
+                    {items.map(item => (
+                      <Option key={item.itemId} value={item.itemId}>
+                        {item.name} ({item.code})
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Row gutter={[8, 0]}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="orderedQuantity"
+                      label="Buyurtma miqdori"
+                      rules={[{ required: true, message: 'Buyurtma miqdorini kiriting' }]}
+                    >
+                      <InputNumber min={0.001} step={0.001} className="w-full" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="unitPrice"
+                      label="Birlik narxi (so'm)"
+                      rules={[{ required: true, message: 'Birlik narxini kiriting' }]}
+                    >
+                      <InputNumber 
+                        min={0} 
+                        step={100} 
+                        className="w-full"
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Form.Item>
+                  <Space>
+                    <Button type="primary" htmlType="submit" size="small" loading={loading}>
+                      Saqlash
+                    </Button>
+                    <Button onClick={() => itemForm.resetFields()} size="small">
+                      Tozalash
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+            </TabPane>
+          </Tabs>
         )}
       </Drawer>
 
