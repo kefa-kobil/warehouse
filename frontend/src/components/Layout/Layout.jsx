@@ -16,6 +16,7 @@ import {
   SwapOutlined,
   ToolOutlined,
   ShoppingOutlined,
+  InboxOutlined,
   LogoutOutlined,
   GlobalOutlined,
 } from '@ant-design/icons';
@@ -36,6 +37,11 @@ const Layout = ({ children }) => {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: t('navigation.dashboard'),
+    },
+    {
+      key: '/receiving',
+      icon: <InboxOutlined />,
+      label: 'Qabul qilish',
     },
     {
       key: '/users',

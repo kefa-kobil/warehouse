@@ -17,6 +17,7 @@ import Clients from './pages/Clients/Clients';
 import Transactions from './pages/Transactions/Transactions';
 import Production from './pages/Production/Production';
 import Orders from './pages/Orders/Orders';
+import Receiving from './pages/Receiving/Receiving';
 import { useAuthStore } from './store/authStore';
 
 const App = () => {
@@ -54,6 +55,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/receiving" element={<Receiving />} />
             <Route path="/users" element={<Users />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/units" element={<Units />} />
