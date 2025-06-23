@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds timeout
 });
 
 // Request interceptor to add auth token
@@ -20,21 +21,37 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor - FAQAT 401 xatolikda logout qilish
+// Response interceptor with better error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Faqat authentication xatolikda logout qilish
-    if (error.response?.status === 401 && 
-        error.response?.data?.message?.includes('authentication')) {
+    console.error('API Error:', error);
+    
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error - server might be down');
+      return Promise.reject(new Error('Server bilan aloqa yo\'q. Iltimos, keyinroq urinib ko\'ring.'));
+    }
+    
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      console.error('Authentication error');
       useAuthStore.getState().logout();
       window.location.href = '/login';
+      return Promise.reject(new Error('Avtorizatsiya muddati tugagan. Qaytadan kiring.'));
     }
-    return Promise.reject(error);
+    
+    // Handle other HTTP errors
+    const message = error.response?.data?.message || 
+                   error.response?.data?.error || 
+                   `Server xatoligi: ${error.response?.status}`;
+    
+    return Promise.reject(new Error(message));
   }
 );
 

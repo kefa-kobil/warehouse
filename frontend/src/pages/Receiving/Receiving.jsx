@@ -24,6 +24,7 @@ import {
   Drawer,
   Empty,
   Alert,
+  Spin,
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -40,6 +41,7 @@ import {
   WarningOutlined,
   DollarOutlined,
   CalendarOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -59,6 +61,7 @@ const Receiving = () => {
   const [users, setUsers] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [itemsDrawerVisible, setItemsDrawerVisible] = useState(false);
   const [bulkModalVisible, setBulkModalVisible] = useState(false);
@@ -77,21 +80,21 @@ const Receiving = () => {
       dataIndex: 'orderNumber',
       key: 'orderNumber',
       width: 140,
-      render: (text) => <Text code className="text-xs font-medium">{text}</Text>,
+      render: (text) => <Text code className="text-xs font-medium">{text || 'N/A'}</Text>,
     },
     {
       title: 'Ta\'minlovchi',
       dataIndex: 'supplier',
       key: 'supplier',
       width: 150,
-      render: (text) => <Text className="text-xs">{text}</Text>,
+      render: (text) => <Text className="text-xs">{text || 'Noma\'lum'}</Text>,
     },
     {
       title: 'Omborxona',
       dataIndex: ['warehouse', 'name'],
       key: 'warehouse',
       width: 120,
-      render: (text) => <Tag color="blue" className="text-xs">{text}</Tag>,
+      render: (text) => <Tag color="blue" className="text-xs">{text || 'N/A'}</Tag>,
     },
     {
       title: 'Holat',
@@ -111,7 +114,7 @@ const Receiving = () => {
           RECEIVED: 'Qabul qilingan',
           CANCELLED: 'Bekor qilingan'
         };
-        return <Tag color={colors[status]} className="text-xs">{labels[status]}</Tag>;
+        return <Tag color={colors[status]} className="text-xs">{labels[status] || status}</Tag>;
       },
     },
     {
@@ -119,7 +122,11 @@ const Receiving = () => {
       dataIndex: 'orderDate',
       key: 'orderDate',
       width: 120,
-      render: (date) => <Text className="text-xs">{dayjs(date).format('DD.MM.YYYY')}</Text>,
+      render: (date) => (
+        <Text className="text-xs">
+          {date ? dayjs(date).format('DD.MM.YYYY') : 'N/A'}
+        </Text>
+      ),
     },
     {
       title: 'Qabul sanasi',
@@ -139,7 +146,7 @@ const Receiving = () => {
       width: 100,
       render: (amount) => (
         <Text className="text-xs font-medium text-green-600">
-          {amount ? `${amount.toLocaleString()} so'm` : '0 so\'m'}
+          {amount ? `${Number(amount).toLocaleString()} so'm` : '0 so\'m'}
         </Text>
       ),
     },
@@ -201,10 +208,10 @@ const Receiving = () => {
       key: 'item',
       render: (text, record) => (
         <div>
-          <Text strong className="text-xs">{text}</Text>
+          <Text strong className="text-xs">{text || 'N/A'}</Text>
           <br />
           <Text type="secondary" className="text-xs">
-            Kod: {record.item?.code}
+            Kod: {record.item?.code || 'N/A'}
           </Text>
         </div>
       ),
@@ -216,10 +223,10 @@ const Receiving = () => {
       width: 120,
       render: (text, record) => (
         <div className="text-center">
-          <Text className="text-xs font-medium">{text}</Text>
+          <Text className="text-xs font-medium">{text || 0}</Text>
           <br />
           <Text type="secondary" className="text-xs">
-            {record.item?.unit?.name}
+            {record.item?.unit?.name || 'N/A'}
           </Text>
         </div>
       ),
@@ -236,7 +243,7 @@ const Receiving = () => {
           </Text>
           <br />
           <Text type="secondary" className="text-xs">
-            {record.item?.unit?.name}
+            {record.item?.unit?.name || 'N/A'}
           </Text>
         </div>
       ),
@@ -248,7 +255,7 @@ const Receiving = () => {
       width: 100,
       render: (price) => (
         <Text className="text-xs font-medium">
-          {price ? `${price.toLocaleString()} so'm` : '0 so\'m'}
+          {price ? `${Number(price).toLocaleString()} so'm` : '0 so\'m'}
         </Text>
       ),
     },
@@ -259,7 +266,7 @@ const Receiving = () => {
       width: 120,
       render: (price) => (
         <Text className="text-xs font-bold text-green-600">
-          {price ? `${price.toLocaleString()} so'm` : '0 so\'m'}
+          {price ? `${Number(price).toLocaleString()} so'm` : '0 so\'m'}
         </Text>
       ),
     },
@@ -299,27 +306,74 @@ const Receiving = () => {
   ];
 
   const fetchData = async () => {
-    setLoading(true);
+    setDataLoading(true);
     try {
+      console.log('Fetching data...');
+      
       const [ordersData, warehousesData, usersData, itemsData] = await Promise.all([
-        orderService.getAll(),
-        warehouseService.getAll(),
-        userService.getAll(),
-        itemService.getAll(),
+        orderService.getAll().catch(err => {
+          console.error('Orders fetch error:', err);
+          return [];
+        }),
+        warehouseService.getAll().catch(err => {
+          console.error('Warehouses fetch error:', err);
+          return [];
+        }),
+        userService.getAll().catch(err => {
+          console.error('Users fetch error:', err);
+          return [];
+        }),
+        itemService.getAll().catch(err => {
+          console.error('Items fetch error:', err);
+          return [];
+        }),
       ]);
+      
+      console.log('Data fetched:', {
+        orders: ordersData.length,
+        warehouses: warehousesData.length,
+        users: usersData.length,
+        items: itemsData.length
+      });
+      
       setOrders(ordersData);
       setWarehouses(warehousesData);
       setUsers(usersData);
       setItems(itemsData);
+      
+      // Show warnings if data is empty
+      if (warehousesData.length === 0) {
+        message.warning('Omborxonalar ro\'yxati bo\'sh. Avval omborxona yarating.');
+      }
+      if (usersData.length === 0) {
+        message.warning('Foydalanuvchilar ro\'yxati bo\'sh. Avval foydalanuvchi yarating.');
+      }
+      if (itemsData.length === 0) {
+        message.warning('Xomashyolar ro\'yxati bo\'sh. Avval xomashyo yarating.');
+      }
+      
     } catch (error) {
       console.error('Ma\'lumotlarni yuklashda xatolik:', error);
-      message.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+      message.error('Ma\'lumotlarni yuklashda xatolik yuz berdi: ' + error.message);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
+  const handleRefresh = () => {
+    fetchData();
+  };
+
   const handleAdd = () => {
+    if (warehouses.length === 0) {
+      message.error('Avval omborxona yarating!');
+      return;
+    }
+    if (users.length === 0) {
+      message.error('Avval foydalanuvchi yarating!');
+      return;
+    }
+    
     setEditingOrder(null);
     form.resetFields();
     form.setFieldsValue({ 
@@ -343,6 +397,7 @@ const Receiving = () => {
   };
 
   const handleSubmit = async (values) => {
+    setLoading(true);
     try {
       const payload = {
         ...values,
@@ -363,45 +418,60 @@ const Receiving = () => {
       fetchData();
     } catch (error) {
       console.error('Buyurtmani saqlashda xatolik:', error);
-      message.error('Buyurtmani saqlashda xatolik yuz berdi');
+      message.error('Buyurtmani saqlashda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleConfirm = async (id) => {
+    setLoading(true);
     try {
       await orderService.confirm(id);
       message.success('Buyurtma tasdiqlandi');
       fetchData();
     } catch (error) {
       console.error('Buyurtmani tasdiqlashda xatolik:', error);
-      message.error(error.response?.data?.message || 'Buyurtmani tasdiqlashda xatolik yuz berdi');
+      message.error('Buyurtmani tasdiqlashda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleReceive = async (id) => {
+    setLoading(true);
     try {
       await orderService.receive(id);
       message.success('Buyurtma qabul qilindi va omborga qo\'shildi');
       fetchData();
     } catch (error) {
       console.error('Buyurtmani qabul qilishda xatolik:', error);
-      message.error(error.response?.data?.message || 'Buyurtmani qabul qilishda xatolik yuz berdi');
+      message.error('Buyurtmani qabul qilishda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleViewItems = async (order) => {
     setSelectedOrder(order);
+    setLoading(true);
     try {
       const items = await orderService.getItems(order.orderId);
       setOrderItems(items);
       setItemsDrawerVisible(true);
     } catch (error) {
       console.error('Buyurtma xomashyolarini yuklashda xatolik:', error);
-      message.error('Buyurtma xomashyolarini yuklashda xatolik yuz berdi');
+      message.error('Buyurtma xomashyolarini yuklashda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddItem = () => {
+    if (items.length === 0) {
+      message.error('Avval xomashyo yarating!');
+      return;
+    }
     itemForm.resetFields();
     itemForm.setFieldsValue({ editing: false });
   };
@@ -416,6 +486,7 @@ const Receiving = () => {
   };
 
   const handleItemSubmit = async (values) => {
+    setLoading(true);
     try {
       const payload = {
         item: { itemId: values.itemId },
@@ -436,11 +507,14 @@ const Receiving = () => {
       itemForm.resetFields();
     } catch (error) {
       console.error('Xomashyoni saqlashda xatolik:', error);
-      message.error('Xomashyoni saqlashda xatolik yuz berdi');
+      message.error('Xomashyoni saqlashda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRemoveItem = async (itemId) => {
+    setLoading(true);
     try {
       await orderService.removeItem(itemId);
       message.success('Xomashyo o\'chirildi');
@@ -448,12 +522,18 @@ const Receiving = () => {
       setOrderItems(updatedItems);
     } catch (error) {
       console.error('Xomashyoni o\'chirishda xatolik:', error);
-      message.error('Xomashyoni o\'chirishda xatolik yuz berdi');
+      message.error('Xomashyoni o\'chirishda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Bulk operations
   const handleBulkAdd = () => {
+    if (items.length === 0) {
+      message.error('Avval xomashyo yarating!');
+      return;
+    }
     setBulkItems([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
     setBulkModalVisible(true);
   };
@@ -476,6 +556,7 @@ const Receiving = () => {
   };
 
   const handleBulkSubmit = async () => {
+    setLoading(true);
     try {
       const validItems = bulkItems.filter(item => 
         item.itemId && item.orderedQuantity > 0 && item.unitPrice >= 0
@@ -503,7 +584,9 @@ const Receiving = () => {
       setOrderItems(updatedItems);
     } catch (error) {
       console.error('Ommaviy qo\'shishda xatolik:', error);
-      message.error('Ommaviy qo\'shishda xatolik yuz berdi');
+      message.error('Ommaviy qo\'shishda xatolik yuz berdi: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -522,6 +605,14 @@ const Receiving = () => {
     fetchData();
   }, []);
 
+  if (dataLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <Spin size="large" tip="Ma'lumotlar yuklanmoqda..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
@@ -529,16 +620,57 @@ const Receiving = () => {
           <InboxOutlined className="mr-2" />
           Qabul qilish
         </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAdd}
-          size="small"
-          className="w-full sm:w-auto"
-        >
-          Yangi buyurtma
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            size="small"
+            loading={loading}
+          >
+            Yangilash
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAdd}
+            size="small"
+            className="w-full sm:w-auto"
+          >
+            Yangi buyurtma
+          </Button>
+        </Space>
       </div>
+
+      {/* Data Status Alerts */}
+      {warehouses.length === 0 && (
+        <Alert
+          message="Omborxonalar yo'q"
+          description="Buyurtma yaratish uchun avval omborxona yarating."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+      )}
+      
+      {users.length === 0 && (
+        <Alert
+          message="Foydalanuvchilar yo'q"
+          description="Buyurtma yaratish uchun avval foydalanuvchi yarating."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+      )}
+      
+      {items.length === 0 && (
+        <Alert
+          message="Xomashyolar yo'q"
+          description="Buyurtmaga xomashyo qo'shish uchun avval xomashyo yarating."
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+      )}
 
       {/* Statistics */}
       <Row gutter={[8, 8]} className="mb-4 sm:mb-6">
@@ -586,27 +718,34 @@ const Receiving = () => {
       </Row>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={orders}
-          loading={loading}
-          rowKey="orderId"
-          scroll={{ x: 800 }}
-          size="small"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
-            responsive: true,
-          }}
-          rowClassName={(record) => {
-            if (record.status === 'PENDING') return 'bg-orange-50';
-            if (record.status === 'CONFIRMED') return 'bg-blue-50';
-            if (record.status === 'RECEIVED') return 'bg-green-50';
-            return '';
-          }}
-        />
+        {orders.length === 0 ? (
+          <Empty 
+            description="Hozircha buyurtmalar yo'q"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={orders}
+            loading={loading}
+            rowKey="orderId"
+            scroll={{ x: 800 }}
+            size="small"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              responsive: true,
+            }}
+            rowClassName={(record) => {
+              if (record.status === 'PENDING') return 'bg-orange-50';
+              if (record.status === 'CONFIRMED') return 'bg-blue-50';
+              if (record.status === 'RECEIVED') return 'bg-green-50';
+              return '';
+            }}
+          />
+        )}
       </Card>
 
       {/* Order Modal */}
@@ -686,7 +825,7 @@ const Receiving = () => {
 
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" size="small">
+              <Button type="primary" htmlType="submit" size="small" loading={loading}>
                 Saqlash
               </Button>
               <Button onClick={() => setModalVisible(false)} size="small">
@@ -703,7 +842,7 @@ const Receiving = () => {
           <div className="flex items-center gap-2">
             <ShoppingOutlined />
             <span className="text-sm">
-              {selectedOrder?.orderNumber} - {selectedOrder?.supplier}
+              {selectedOrder?.orderNumber || 'N/A'} - {selectedOrder?.supplier || 'N/A'}
             </span>
             <Tag color={
               selectedOrder?.status === 'PENDING' ? 'orange' :
@@ -739,21 +878,25 @@ const Receiving = () => {
                   <Row gutter={[16, 8]}>
                     <Col xs={12} sm={6}>
                       <Text type="secondary" className="text-xs">Buyurtma raqami:</Text>
-                      <div><Text strong className="text-sm">{selectedOrder.orderNumber}</Text></div>
+                      <div><Text strong className="text-sm">{selectedOrder.orderNumber || 'N/A'}</Text></div>
                     </Col>
                     <Col xs={12} sm={6}>
                       <Text type="secondary" className="text-xs">Ta'minlovchi:</Text>
-                      <div><Text className="text-sm">{selectedOrder.supplier}</Text></div>
+                      <div><Text className="text-sm">{selectedOrder.supplier || 'N/A'}</Text></div>
                     </Col>
                     <Col xs={12} sm={6}>
                       <Text type="secondary" className="text-xs">Buyurtma sanasi:</Text>
-                      <div><Text className="text-sm">{dayjs(selectedOrder.orderDate).format('DD.MM.YYYY')}</Text></div>
+                      <div>
+                        <Text className="text-sm">
+                          {selectedOrder.orderDate ? dayjs(selectedOrder.orderDate).format('DD.MM.YYYY') : 'N/A'}
+                        </Text>
+                      </div>
                     </Col>
                     <Col xs={12} sm={6}>
                       <Text type="secondary" className="text-xs">Jami summa:</Text>
                       <div>
                         <Text strong className="text-sm text-green-600">
-                          {selectedOrder.totalAmount ? `${selectedOrder.totalAmount.toLocaleString()} so'm` : '0 so\'m'}
+                          {selectedOrder.totalAmount ? `${Number(selectedOrder.totalAmount).toLocaleString()} so'm` : '0 so\'m'}
                         </Text>
                       </div>
                     </Col>
@@ -768,6 +911,7 @@ const Receiving = () => {
                       icon={<PlusOutlined />}
                       onClick={handleAddItem}
                       size="small"
+                      disabled={items.length === 0}
                     >
                       Bitta qo'shish
                     </Button>
@@ -777,6 +921,7 @@ const Receiving = () => {
                       onClick={handleBulkAdd}
                       style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                       size="small"
+                      disabled={items.length === 0}
                     >
                       Ommaviy qo'shish
                     </Button>
@@ -786,6 +931,7 @@ const Receiving = () => {
                         icon={<CheckCircleOutlined />}
                         onClick={() => handleConfirm(selectedOrder.orderId)}
                         size="small"
+                        loading={loading}
                       >
                         Tasdiqlash
                       </Button>
@@ -797,6 +943,7 @@ const Receiving = () => {
                         onClick={() => handleReceive(selectedOrder.orderId)}
                         style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                         size="small"
+                        loading={loading}
                       >
                         Qabul qilish
                       </Button>
@@ -816,9 +963,10 @@ const Receiving = () => {
                     pagination={false}
                     size="small"
                     scroll={{ x: 600 }}
+                    loading={loading}
                     summary={(pageData) => {
-                      const totalAmount = pageData.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-                      const totalQuantity = pageData.reduce((sum, item) => sum + (item.orderedQuantity || 0), 0);
+                      const totalAmount = pageData.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+                      const totalQuantity = pageData.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
                       
                       return (
                         <Table.Summary.Row>
@@ -858,82 +1006,91 @@ const Receiving = () => {
               } 
               key="2"
             >
-              <Form
-                form={itemForm}
-                layout="vertical"
-                onFinish={handleItemSubmit}
-              >
-                <Form.Item name="editing" hidden>
-                  <Input />
-                </Form.Item>
-                <Form.Item name="editingId" hidden>
-                  <Input />
-                </Form.Item>
-
-                <Form.Item
-                  name="itemId"
-                  label="Xomashyo"
-                  rules={[{ required: true, message: 'Xomashyoni tanlang' }]}
+              {items.length === 0 ? (
+                <Alert
+                  message="Xomashyolar yo'q"
+                  description="Buyurtmaga xomashyo qo'shish uchun avval xomashyo yarating."
+                  type="warning"
+                  showIcon
+                />
+              ) : (
+                <Form
+                  form={itemForm}
+                  layout="vertical"
+                  onFinish={handleItemSubmit}
                 >
-                  <Select placeholder="Xomashyoni tanlang" showSearch>
-                    {items.map(item => (
-                      <Option key={item.itemId} value={item.itemId}>
-                        <div>
-                          <Text strong>{item.name}</Text>
-                          <br />
-                          <Text type="secondary" className="text-xs">
-                            Kod: {item.code} | Mavjud: {item.quantity} {item.unit?.name}
-                          </Text>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                  <Form.Item name="editing" hidden>
+                    <Input />
+                  </Form.Item>
+                  <Form.Item name="editingId" hidden>
+                    <Input />
+                  </Form.Item>
 
-                <Row gutter={[8, 0]}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="orderedQuantity"
-                      label="Buyurtma miqdori"
-                      rules={[{ required: true, message: 'Buyurtma miqdorini kiriting' }]}
-                    >
-                      <InputNumber 
-                        min={0.001} 
-                        step={0.001} 
-                        className="w-full" 
-                        placeholder="Miqdor"
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="unitPrice"
-                      label="Birlik narxi (so'm)"
-                      rules={[{ required: true, message: 'Birlik narxini kiriting' }]}
-                    >
-                      <InputNumber 
-                        min={0} 
-                        step={100} 
-                        className="w-full" 
-                        placeholder="Narx"
-                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                  <Form.Item
+                    name="itemId"
+                    label="Xomashyo"
+                    rules={[{ required: true, message: 'Xomashyoni tanlang' }]}
+                  >
+                    <Select placeholder="Xomashyoni tanlang" showSearch>
+                      {items.map(item => (
+                        <Option key={item.itemId} value={item.itemId}>
+                          <div>
+                            <Text strong>{item.name}</Text>
+                            <br />
+                            <Text type="secondary" className="text-xs">
+                              Kod: {item.code} | Mavjud: {item.quantity} {item.unit?.name}
+                            </Text>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
 
-                <Form.Item>
-                  <Space>
-                    <Button type="primary" htmlType="submit" size="small">
-                      Saqlash
-                    </Button>
-                    <Button onClick={() => itemForm.resetFields()} size="small">
-                      Tozalash
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
+                  <Row gutter={[8, 0]}>
+                    <Col xs={24} sm={12}>
+                      <Form.Item
+                        name="orderedQuantity"
+                        label="Buyurtma miqdori"
+                        rules={[{ required: true, message: 'Buyurtma miqdorini kiriting' }]}
+                      >
+                        <InputNumber 
+                          min={0.001} 
+                          step={0.001} 
+                          className="w-full" 
+                          placeholder="Miqdor"
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Form.Item
+                        name="unitPrice"
+                        label="Birlik narxi (so'm)"
+                        rules={[{ required: true, message: 'Birlik narxini kiriting' }]}
+                      >
+                        <InputNumber 
+                          min={0} 
+                          step={100} 
+                          className="w-full" 
+                          placeholder="Narx"
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+
+                  <Form.Item>
+                    <Space>
+                      <Button type="primary" htmlType="submit" size="small" loading={loading}>
+                        Saqlash
+                      </Button>
+                      <Button onClick={() => itemForm.resetFields()} size="small">
+                        Tozalash
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </Form>
+              )}
             </TabPane>
           </Tabs>
         )}
@@ -1050,7 +1207,7 @@ const Receiving = () => {
           <Button onClick={() => setBulkModalVisible(false)} size="small">
             Bekor qilish
           </Button>
-          <Button type="primary" onClick={handleBulkSubmit} size="small">
+          <Button type="primary" onClick={handleBulkSubmit} size="small" loading={loading}>
             Barchasini saqlash
           </Button>
         </div>
