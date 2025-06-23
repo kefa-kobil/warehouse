@@ -45,7 +45,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { orderService } from '../../services/orderService';
+import { materialReceiptService } from '../../services/materialReceiptService';
 import { warehouseService } from '../../services/warehouseService';
 import { userService } from '../../services/userService';
 import { itemService } from '../../services/itemService';
@@ -56,7 +56,7 @@ const { Option } = Select;
 const { TabPane } = Tabs;
 
 const Receiving = () => {
-  const [orders, setOrders] = useState([]);
+  const [receipts, setReceipts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [users, setUsers] = useState([]);
   const [items, setItems] = useState([]);
@@ -65,9 +65,9 @@ const Receiving = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [itemsDrawerVisible, setItemsDrawerVisible] = useState(false);
   const [bulkModalVisible, setBulkModalVisible] = useState(false);
-  const [editingOrder, setEditingOrder] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [orderItems, setOrderItems] = useState([]);
+  const [editingReceipt, setEditingReceipt] = useState(null);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [receiptItems, setReceiptItems] = useState([]);
   const [bulkItems, setBulkItems] = useState([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
   const [form] = Form.useForm();
   const [itemForm] = Form.useForm();
@@ -76,9 +76,9 @@ const Receiving = () => {
 
   const columns = [
     {
-      title: 'Buyurtma raqami',
-      dataIndex: 'orderNumber',
-      key: 'orderNumber',
+      title: 'Qabul raqami',
+      dataIndex: 'receiptNumber',
+      key: 'receiptNumber',
       width: 140,
       render: (text) => <Text code className="text-xs font-medium">{text || 'N/A'}</Text>,
     },
@@ -104,13 +104,11 @@ const Receiving = () => {
       render: (status) => {
         const colors = {
           PENDING: 'orange',
-          CONFIRMED: 'blue',
           RECEIVED: 'green',
           CANCELLED: 'red'
         };
         const labels = {
           PENDING: 'Kutilmoqda',
-          CONFIRMED: 'Tasdiqlangan',
           RECEIVED: 'Qabul qilingan',
           CANCELLED: 'Bekor qilingan'
         };
@@ -118,9 +116,9 @@ const Receiving = () => {
       },
     },
     {
-      title: 'Buyurtma sanasi',
-      dataIndex: 'orderDate',
-      key: 'orderDate',
+      title: 'Qabul sanasi',
+      dataIndex: 'receiptDate',
+      key: 'receiptDate',
       width: 120,
       render: (date) => (
         <Text className="text-xs">
@@ -129,7 +127,7 @@ const Receiving = () => {
       ),
     },
     {
-      title: 'Qabul sanasi',
+      title: 'Qabul qilingan sana',
       dataIndex: 'receivedDate',
       key: 'receivedDate',
       width: 120,
@@ -169,19 +167,8 @@ const Receiving = () => {
             <Button
               type="primary"
               size="small"
-              icon={<CheckCircleOutlined />}
-              onClick={() => handleConfirm(record.orderId)}
-              className="text-xs"
-            >
-              Tasdiqlash
-            </Button>
-          )}
-          {record.status === 'CONFIRMED' && (
-            <Button
-              type="primary"
-              size="small"
               icon={<InboxOutlined />}
-              onClick={() => handleReceive(record.orderId)}
+              onClick={() => handleReceive(record.receiptId)}
               className="text-xs bg-green-500 border-green-500"
             >
               Qabul qilish
@@ -287,7 +274,7 @@ const Receiving = () => {
           </Button>
           <Popconfirm
             title="Xomashyoni o'chirish"
-            onConfirm={() => handleRemoveItem(record.orderItemId)}
+            onConfirm={() => handleRemoveItem(record.receiptItemId)}
             okText="Ha"
             cancelText="Yo'q"
           >
@@ -310,9 +297,9 @@ const Receiving = () => {
     try {
       console.log('Fetching data...');
       
-      const [ordersData, warehousesData, usersData, itemsData] = await Promise.all([
-        orderService.getAll().catch(err => {
-          console.error('Orders fetch error:', err);
+      const [receiptsData, warehousesData, usersData, itemsData] = await Promise.all([
+        materialReceiptService.getAll().catch(err => {
+          console.error('Receipts fetch error:', err);
           return [];
         }),
         warehouseService.getAll().catch(err => {
@@ -330,13 +317,13 @@ const Receiving = () => {
       ]);
       
       console.log('Data fetched:', {
-        orders: ordersData.length,
+        receipts: receiptsData.length,
         warehouses: warehousesData.length,
         users: usersData.length,
         items: itemsData.length
       });
       
-      setOrders(ordersData);
+      setReceipts(receiptsData);
       setWarehouses(warehousesData);
       setUsers(usersData);
       setItems(itemsData);
@@ -374,24 +361,24 @@ const Receiving = () => {
       return;
     }
     
-    setEditingOrder(null);
+    setEditingReceipt(null);
     form.resetFields();
     form.setFieldsValue({ 
       userId: user?.userId,
-      orderDate: dayjs(),
+      receiptDate: dayjs(),
       status: 'PENDING'
     });
     setModalVisible(true);
   };
 
-  const handleEdit = (order) => {
-    setEditingOrder(order);
+  const handleEdit = (receipt) => {
+    setEditingReceipt(receipt);
     form.setFieldsValue({
-      ...order,
-      orderDate: order.orderDate ? dayjs(order.orderDate) : null,
-      receivedDate: order.receivedDate ? dayjs(order.receivedDate) : null,
-      warehouseId: order.warehouse?.warehouseId,
-      userId: order.user?.userId,
+      ...receipt,
+      receiptDate: receipt.receiptDate ? dayjs(receipt.receiptDate) : null,
+      receivedDate: receipt.receivedDate ? dayjs(receipt.receivedDate) : null,
+      warehouseId: receipt.warehouse?.warehouseId,
+      userId: receipt.user?.userId,
     });
     setModalVisible(true);
   };
@@ -401,38 +388,24 @@ const Receiving = () => {
     try {
       const payload = {
         ...values,
-        orderDate: values.orderDate?.toISOString(),
+        receiptDate: values.receiptDate?.toISOString(),
         receivedDate: values.receivedDate?.toISOString(),
         warehouse: { warehouseId: values.warehouseId },
         user: { userId: values.userId },
       };
       
-      if (editingOrder) {
-        await orderService.update(editingOrder.orderId, payload);
-        message.success('Buyurtma muvaffaqiyatli yangilandi');
+      if (editingReceipt) {
+        await materialReceiptService.update(editingReceipt.receiptId, payload);
+        message.success('Qabul muvaffaqiyatli yangilandi');
       } else {
-        await orderService.create(payload);
-        message.success('Buyurtma muvaffaqiyatli yaratildi');
+        await materialReceiptService.create(payload);
+        message.success('Qabul muvaffaqiyatli yaratildi');
       }
       setModalVisible(false);
       fetchData();
     } catch (error) {
-      console.error('Buyurtmani saqlashda xatolik:', error);
-      message.error('Buyurtmani saqlashda xatolik yuz berdi: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirm = async (id) => {
-    setLoading(true);
-    try {
-      await orderService.confirm(id);
-      message.success('Buyurtma tasdiqlandi');
-      fetchData();
-    } catch (error) {
-      console.error('Buyurtmani tasdiqlashda xatolik:', error);
-      message.error('Buyurtmani tasdiqlashda xatolik yuz berdi: ' + error.message);
+      console.error('Qabulni saqlashda xatolik:', error);
+      message.error('Qabulni saqlashda xatolik yuz berdi: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -441,27 +414,27 @@ const Receiving = () => {
   const handleReceive = async (id) => {
     setLoading(true);
     try {
-      await orderService.receive(id);
-      message.success('Buyurtma qabul qilindi va omborga qo\'shildi');
+      await materialReceiptService.receive(id);
+      message.success('Qabul qilindi va omborga qo\'shildi');
       fetchData();
     } catch (error) {
-      console.error('Buyurtmani qabul qilishda xatolik:', error);
-      message.error('Buyurtmani qabul qilishda xatolik yuz berdi: ' + error.message);
+      console.error('Qabulni qabul qilishda xatolik:', error);
+      message.error('Qabulni qabul qilishda xatolik yuz berdi: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewItems = async (order) => {
-    setSelectedOrder(order);
+  const handleViewItems = async (receipt) => {
+    setSelectedReceipt(receipt);
     setLoading(true);
     try {
-      const items = await orderService.getItems(order.orderId);
-      setOrderItems(items);
+      const items = await materialReceiptService.getItems(receipt.receiptId);
+      setReceiptItems(items);
       setItemsDrawerVisible(true);
     } catch (error) {
-      console.error('Buyurtma xomashyolarini yuklashda xatolik:', error);
-      message.error('Buyurtma xomashyolarini yuklashda xatolik yuz berdi: ' + error.message);
+      console.error('Qabul xomashyolarini yuklashda xatolik:', error);
+      message.error('Qabul xomashyolarini yuklashda xatolik yuz berdi: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -481,7 +454,7 @@ const Receiving = () => {
       ...item,
       itemId: item.item?.itemId,
       editing: true,
-      editingId: item.orderItemId,
+      editingId: item.receiptItemId,
     });
   };
 
@@ -495,15 +468,15 @@ const Receiving = () => {
       };
 
       if (values.editing) {
-        await orderService.updateItem(values.editingId, payload);
+        await materialReceiptService.updateItem(values.editingId, payload);
         message.success('Xomashyo muvaffaqiyatli yangilandi');
       } else {
-        await orderService.addItem(selectedOrder.orderId, payload);
+        await materialReceiptService.addItem(selectedReceipt.receiptId, payload);
         message.success('Xomashyo muvaffaqiyatli qo\'shildi');
       }
 
-      const updatedItems = await orderService.getItems(selectedOrder.orderId);
-      setOrderItems(updatedItems);
+      const updatedItems = await materialReceiptService.getItems(selectedReceipt.receiptId);
+      setReceiptItems(updatedItems);
       itemForm.resetFields();
     } catch (error) {
       console.error('Xomashyoni saqlashda xatolik:', error);
@@ -516,10 +489,10 @@ const Receiving = () => {
   const handleRemoveItem = async (itemId) => {
     setLoading(true);
     try {
-      await orderService.removeItem(itemId);
+      await materialReceiptService.removeItem(itemId);
       message.success('Xomashyo o\'chirildi');
-      const updatedItems = await orderService.getItems(selectedOrder.orderId);
-      setOrderItems(updatedItems);
+      const updatedItems = await materialReceiptService.getItems(selectedReceipt.receiptId);
+      setReceiptItems(updatedItems);
     } catch (error) {
       console.error('Xomashyoni o\'chirishda xatolik:', error);
       message.error('Xomashyoni o\'chirishda xatolik yuz berdi: ' + error.message);
@@ -568,7 +541,7 @@ const Receiving = () => {
       }
 
       const promises = validItems.map(item => 
-        orderService.addItem(selectedOrder.orderId, {
+        materialReceiptService.addItem(selectedReceipt.receiptId, {
           item: { itemId: item.itemId },
           orderedQuantity: item.orderedQuantity,
           unitPrice: item.unitPrice,
@@ -579,9 +552,9 @@ const Receiving = () => {
       message.success(`${validItems.length} ta xomashyo muvaffaqiyatli qo'shildi`);
       setBulkModalVisible(false);
       
-      // Refresh order items
-      const updatedItems = await orderService.getItems(selectedOrder.orderId);
-      setOrderItems(updatedItems);
+      // Refresh receipt items
+      const updatedItems = await materialReceiptService.getItems(selectedReceipt.receiptId);
+      setReceiptItems(updatedItems);
     } catch (error) {
       console.error('Ommaviy qo\'shishda xatolik:', error);
       message.error('Ommaviy qo\'shishda xatolik yuz berdi: ' + error.message);
@@ -591,12 +564,12 @@ const Receiving = () => {
   };
 
   const getStats = () => {
-    const pendingCount = orders.filter(o => o.status === 'PENDING').length;
-    const confirmedCount = orders.filter(o => o.status === 'CONFIRMED').length;
-    const receivedCount = orders.filter(o => o.status === 'RECEIVED').length;
-    const totalAmount = orders.reduce((sum, o) => sum + (parseFloat(o.totalAmount) || 0), 0);
+    const pendingCount = receipts.filter(r => r.status === 'PENDING').length;
+    const receivedCount = receipts.filter(r => r.status === 'RECEIVED').length;
+    const cancelledCount = receipts.filter(r => r.status === 'CANCELLED').length;
+    const totalAmount = receipts.reduce((sum, r) => sum + (parseFloat(r.totalAmount) || 0), 0);
 
-    return { pendingCount, confirmedCount, receivedCount, totalAmount };
+    return { pendingCount, receivedCount, cancelledCount, totalAmount };
   };
 
   const stats = getStats();
@@ -636,7 +609,7 @@ const Receiving = () => {
             size="small"
             className="w-full sm:w-auto"
           >
-            Yangi buyurtma
+            Yangi qabul
           </Button>
         </Space>
       </div>
@@ -645,7 +618,7 @@ const Receiving = () => {
       {warehouses.length === 0 && (
         <Alert
           message="Omborxonalar yo'q"
-          description="Buyurtma yaratish uchun avval omborxona yarating."
+          description="Qabul yaratish uchun avval omborxona yarating."
           type="warning"
           showIcon
           className="mb-4"
@@ -655,7 +628,7 @@ const Receiving = () => {
       {users.length === 0 && (
         <Alert
           message="Foydalanuvchilar yo'q"
-          description="Buyurtma yaratish uchun avval foydalanuvchi yarating."
+          description="Qabul yaratish uchun avval foydalanuvchi yarating."
           type="warning"
           showIcon
           className="mb-4"
@@ -665,7 +638,7 @@ const Receiving = () => {
       {items.length === 0 && (
         <Alert
           message="Xomashyolar yo'q"
-          description="Buyurtmaga xomashyo qo'shish uchun avval xomashyo yarating."
+          description="Qabulga xomashyo qo'shish uchun avval xomashyo yarating."
           type="warning"
           showIcon
           className="mb-4"
@@ -674,7 +647,7 @@ const Receiving = () => {
 
       {/* Statistics */}
       <Row gutter={[8, 8]} className="mb-4 sm:mb-6">
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="text-center">
             <Statistic
               title={<span className="text-xs">Kutilayotgan</span>}
@@ -684,17 +657,7 @@ const Receiving = () => {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
-          <Card className="text-center">
-            <Statistic
-              title={<span className="text-xs">Tasdiqlangan</span>}
-              value={stats.confirmedCount}
-              prefix={<CheckCircleOutlined className="text-sm" />}
-              valueStyle={{ color: '#1890ff', fontSize: '16px' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={12} sm={8}>
           <Card className="text-center">
             <Statistic
               title={<span className="text-xs">Qabul qilingan</span>}
@@ -704,7 +667,7 @@ const Receiving = () => {
             />
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={24} sm={8}>
           <Card className="text-center">
             <Statistic
               title={<span className="text-xs">Jami summa</span>}
@@ -718,17 +681,17 @@ const Receiving = () => {
       </Row>
 
       <Card>
-        {orders.length === 0 ? (
+        {receipts.length === 0 ? (
           <Empty 
-            description="Hozircha buyurtmalar yo'q"
+            description="Hozircha qabullar yo'q"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
           <Table
             columns={columns}
-            dataSource={orders}
+            dataSource={receipts}
             loading={loading}
-            rowKey="orderId"
+            rowKey="receiptId"
             scroll={{ x: 800 }}
             size="small"
             pagination={{
@@ -740,7 +703,6 @@ const Receiving = () => {
             }}
             rowClassName={(record) => {
               if (record.status === 'PENDING') return 'bg-orange-50';
-              if (record.status === 'CONFIRMED') return 'bg-blue-50';
               if (record.status === 'RECEIVED') return 'bg-green-50';
               return '';
             }}
@@ -748,9 +710,9 @@ const Receiving = () => {
         )}
       </Card>
 
-      {/* Order Modal */}
+      {/* Receipt Modal */}
       <Modal
-        title={editingOrder ? 'Buyurtmani tahrirlash' : 'Yangi buyurtma'}
+        title={editingReceipt ? 'Qabulni tahrirlash' : 'Yangi qabul'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -807,8 +769,8 @@ const Receiving = () => {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                name="orderDate"
-                label="Buyurtma sanasi"
+                name="receiptDate"
+                label="Qabul sanasi"
                 rules={[{ required: true, message: 'Sanani tanlang' }]}
               >
                 <DatePicker className="w-full" />
@@ -836,22 +798,20 @@ const Receiving = () => {
         </Form>
       </Modal>
 
-      {/* Order Items Drawer */}
+      {/* Receipt Items Drawer */}
       <Drawer
         title={
           <div className="flex items-center gap-2">
             <ShoppingOutlined />
             <span className="text-sm">
-              {selectedOrder?.orderNumber || 'N/A'} - {selectedOrder?.supplier || 'N/A'}
+              {selectedReceipt?.receiptNumber || 'N/A'} - {selectedReceipt?.supplier || 'N/A'}
             </span>
             <Tag color={
-              selectedOrder?.status === 'PENDING' ? 'orange' :
-              selectedOrder?.status === 'CONFIRMED' ? 'blue' :
-              selectedOrder?.status === 'RECEIVED' ? 'green' : 'red'
+              selectedReceipt?.status === 'PENDING' ? 'orange' :
+              selectedReceipt?.status === 'RECEIVED' ? 'green' : 'red'
             } className="text-xs">
-              {selectedOrder?.status === 'PENDING' ? 'Kutilmoqda' :
-               selectedOrder?.status === 'CONFIRMED' ? 'Tasdiqlangan' :
-               selectedOrder?.status === 'RECEIVED' ? 'Qabul qilingan' : 'Bekor qilingan'}
+              {selectedReceipt?.status === 'PENDING' ? 'Kutilmoqda' :
+               selectedReceipt?.status === 'RECEIVED' ? 'Qabul qilingan' : 'Bekor qilingan'}
             </Tag>
           </div>
         }
@@ -861,244 +821,116 @@ const Receiving = () => {
         width="90%"
         style={{ maxWidth: 1200 }}
       >
-        {selectedOrder && (
-          <Tabs defaultActiveKey="1" className="h-full">
-            <TabPane 
-              tab={
-                <span>
-                  <AppstoreAddOutlined />
-                  Xomashyolar ro'yxati
-                </span>
-              } 
-              key="1"
-            >
-              <div className="space-y-4">
-                {/* Order Info */}
-                <Card size="small">
-                  <Row gutter={[16, 8]}>
-                    <Col xs={12} sm={6}>
-                      <Text type="secondary" className="text-xs">Buyurtma raqami:</Text>
-                      <div><Text strong className="text-sm">{selectedOrder.orderNumber || 'N/A'}</Text></div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Text type="secondary" className="text-xs">Ta'minlovchi:</Text>
-                      <div><Text className="text-sm">{selectedOrder.supplier || 'N/A'}</Text></div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Text type="secondary" className="text-xs">Buyurtma sanasi:</Text>
-                      <div>
-                        <Text className="text-sm">
-                          {selectedOrder.orderDate ? dayjs(selectedOrder.orderDate).format('DD.MM.YYYY') : 'N/A'}
-                        </Text>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Text type="secondary" className="text-xs">Jami summa:</Text>
-                      <div>
-                        <Text strong className="text-sm text-green-600">
-                          {selectedOrder.totalAmount ? `${Number(selectedOrder.totalAmount).toLocaleString()} so'm` : '0 so\'m'}
-                        </Text>
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
+        {selectedReceipt && (
+          <div className="space-y-4">
+            {/* Receipt Info */}
+            <Card size="small">
+              <Row gutter={[16, 8]}>
+                <Col xs={12} sm={6}>
+                  <Text type="secondary" className="text-xs">Qabul raqami:</Text>
+                  <div><Text strong className="text-sm">{selectedReceipt.receiptNumber || 'N/A'}</Text></div>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Text type="secondary" className="text-xs">Ta'minlovchi:</Text>
+                  <div><Text className="text-sm">{selectedReceipt.supplier || 'N/A'}</Text></div>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Text type="secondary" className="text-xs">Qabul sanasi:</Text>
+                  <div>
+                    <Text className="text-sm">
+                      {selectedReceipt.receiptDate ? dayjs(selectedReceipt.receiptDate).format('DD.MM.YYYY') : 'N/A'}
+                    </Text>
+                  </div>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Text type="secondary" className="text-xs">Jami summa:</Text>
+                  <div>
+                    <Text strong className="text-sm text-green-600">
+                      {selectedReceipt.totalAmount ? `${Number(selectedReceipt.totalAmount).toLocaleString()} so'm` : '0 so\'m'}
+                    </Text>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
 
-                {/* Action Buttons */}
-                <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
-                  <Space wrap>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddItem}
-                      size="small"
-                      disabled={items.length === 0}
-                    >
-                      Xomashyo qo'shish
-                    </Button>
-                    <Button
-                      type="primary"
-                      icon={<AppstoreAddOutlined />}
-                      onClick={handleBulkAdd}
-                      style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                      size="small"
-                      disabled={items.length === 0}
-                    >
-                      Ommaviy qo'shish
-                    </Button>
-                    {selectedOrder.status === 'PENDING' && (
-                      <Button
-                        type="primary"
-                        icon={<CheckCircleOutlined />}
-                        onClick={() => handleConfirm(selectedOrder.orderId)}
-                        size="small"
-                        loading={loading}
-                      >
-                        Tasdiqlash
-                      </Button>
-                    )}
-                    {selectedOrder.status === 'CONFIRMED' && (
-                      <Button
-                        type="primary"
-                        icon={<InboxOutlined />}
-                        onClick={() => handleReceive(selectedOrder.orderId)}
-                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                        size="small"
-                        loading={loading}
-                      >
-                        Qabul qilish
-                      </Button>
-                    )}
-                  </Space>
-                  <Text type="secondary" className="text-xs">
-                    Jami: {orderItems.length} ta xomashyo
-                  </Text>
-                </div>
-
-                {/* Items Table */}
-                {orderItems.length > 0 ? (
-                  <Table
-                    columns={itemColumns}
-                    dataSource={orderItems}
-                    rowKey="orderItemId"
-                    pagination={false}
-                    size="small"
-                    scroll={{ x: 600 }}
-                    loading={loading}
-                    summary={(pageData) => {
-                      const totalAmount = pageData.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
-                      const totalQuantity = pageData.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
-                      
-                      return (
-                        <Table.Summary.Row>
-                          <Table.Summary.Cell index={0}>
-                            <Text strong className="text-xs">Jami:</Text>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1}>
-                            <Text strong className="text-xs">{totalQuantity}</Text>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={2}>-</Table.Summary.Cell>
-                          <Table.Summary.Cell index={3}>-</Table.Summary.Cell>
-                          <Table.Summary.Cell index={4}>
-                            <Text strong className="text-xs text-green-600">
-                              {totalAmount.toLocaleString()} so'm
-                            </Text>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={5}>-</Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      );
-                    }}
-                  />
-                ) : (
-                  <Empty 
-                    description="Bu buyurtmada hozircha xomashyolar yo'q"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  />
-                )}
-              </div>
-            </TabPane>
-            
-            <TabPane 
-              tab={
-                <span>
-                  <PlusOutlined />
-                  Xomashyo qo'shish
-                </span>
-              } 
-              key="2"
-            >
-              {items.length === 0 ? (
-                <Alert
-                  message="Xomashyolar yo'q"
-                  description="Buyurtmaga xomashyo qo'shish uchun avval xomashyo yarating."
-                  type="warning"
-                  showIcon
-                />
-              ) : (
-                <Form
-                  form={itemForm}
-                  layout="vertical"
-                  onFinish={handleItemSubmit}
+            {/* Action Buttons */}
+            <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
+              <Space wrap>
+                <Button
+                  type="primary"
+                  icon={<AppstoreAddOutlined />}
+                  onClick={handleBulkAdd}
+                  style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  size="small"
+                  disabled={items.length === 0}
                 >
-                  <Form.Item name="editing" hidden>
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="editingId" hidden>
-                    <Input />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="itemId"
-                    label="Xomashyo"
-                    rules={[{ required: true, message: 'Xomashyoni tanlang' }]}
+                  Xomashyolar qo'shish
+                </Button>
+                {selectedReceipt.status === 'PENDING' && (
+                  <Button
+                    type="primary"
+                    icon={<InboxOutlined />}
+                    onClick={() => handleReceive(selectedReceipt.receiptId)}
+                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                    size="small"
+                    loading={loading}
                   >
-                    <Select placeholder="Xomashyoni tanlang" showSearch>
-                      {items.map(item => (
-                        <Option key={item.itemId} value={item.itemId}>
-                          <div>
-                            <Text strong>{item.name}</Text>
-                            <br />
-                            <Text type="secondary" className="text-xs">
-                              Kod: {item.code} | Mavjud: {item.quantity} {item.unit?.name}
-                            </Text>
-                          </div>
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
+                    Qabul qilish
+                  </Button>
+                )}
+              </Space>
+              <Text type="secondary" className="text-xs">
+                Jami: {receiptItems.length} ta xomashyo
+              </Text>
+            </div>
 
-                  <Row gutter={[8, 0]}>
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="orderedQuantity"
-                        label="Buyurtma miqdori"
-                        rules={[{ required: true, message: 'Buyurtma miqdorini kiriting' }]}
-                      >
-                        <InputNumber 
-                          min={0.001} 
-                          step={0.001} 
-                          className="w-full" 
-                          placeholder="Miqdor"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="unitPrice"
-                        label="Birlik narxi (so'm)"
-                        rules={[{ required: true, message: 'Birlik narxini kiriting' }]}
-                      >
-                        <InputNumber 
-                          min={0} 
-                          step={100} 
-                          className="w-full" 
-                          placeholder="Narx"
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-
-                  <Form.Item>
-                    <Space>
-                      <Button type="primary" htmlType="submit" size="small" loading={loading}>
-                        Saqlash
-                      </Button>
-                      <Button onClick={() => itemForm.resetFields()} size="small">
-                        Tozalash
-                      </Button>
-                    </Space>
-                  </Form.Item>
-                </Form>
-              )}
-            </TabPane>
-          </Tabs>
+            {/* Items Table */}
+            {receiptItems.length > 0 ? (
+              <Table
+                columns={itemColumns}
+                dataSource={receiptItems}
+                rowKey="receiptItemId"
+                pagination={false}
+                size="small"
+                scroll={{ x: 600 }}
+                loading={loading}
+                summary={(pageData) => {
+                  const totalAmount = pageData.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+                  const totalQuantity = pageData.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
+                  
+                  return (
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell index={0}>
+                        <Text strong className="text-xs">Jami:</Text>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={1}>
+                        <Text strong className="text-xs">{totalQuantity}</Text>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={2}>-</Table.Summary.Cell>
+                      <Table.Summary.Cell index={3}>-</Table.Summary.Cell>
+                      <Table.Summary.Cell index={4}>
+                        <Text strong className="text-xs text-green-600">
+                          {totalAmount.toLocaleString()} so'm
+                        </Text>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={5}>-</Table.Summary.Cell>
+                    </Table.Summary.Row>
+                  );
+                }}
+              />
+            ) : (
+              <Empty 
+                description="Bu qabulda hozircha xomashyolar yo'q"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            )}
+          </div>
         )}
       </Drawer>
 
       {/* Bulk Add Modal */}
       <Modal
-        title="Xomashyolarni ommaviy qo'shish"
+        title="Xomashyolarni qo'shish"
         open={bulkModalVisible}
         onCancel={() => setBulkModalVisible(false)}
         footer={null}
@@ -1108,7 +940,7 @@ const Receiving = () => {
         <div className="mb-4">
           <Alert
             message="Maslahat"
-            description="Bir vaqtda ko'plab xomashyolarni buyurtmaga qo'shish uchun quyidagi jadvalni to'ldiring. Masalan: Temir 10 kg, kg 500 so'm"
+            description="Bir vaqtda ko'plab xomashyolarni qabulga qo'shish uchun quyidagi jadvalni to'ldiring. Masalan: Temir 10 kg, kg 500 so'm"
             type="info"
             showIcon
             className="mb-4"
