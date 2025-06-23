@@ -913,7 +913,7 @@ const Receiving = () => {
                       size="small"
                       disabled={items.length === 0}
                     >
-                      Bitta qo'shish
+                      Xomashyo qo'shish
                     </Button>
                     <Button
                       type="primary"
@@ -1001,7 +1001,7 @@ const Receiving = () => {
               tab={
                 <span>
                   <PlusOutlined />
-                  Bitta xomashyo qo'shish
+                  Xomashyo qo'shish
                 </span>
               } 
               key="2"

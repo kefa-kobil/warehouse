@@ -7,6 +7,7 @@ import uzUZ from 'antd/locale/uz_UZ';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Receiving from './pages/Receiving/Receiving';
 import Users from './pages/Users/Users';
 import Categories from './pages/Categories/Categories';
 import Units from './pages/Units/Units';
@@ -17,7 +18,6 @@ import Clients from './pages/Clients/Clients';
 import Transactions from './pages/Transactions/Transactions';
 import Production from './pages/Production/Production';
 import Orders from './pages/Orders/Orders';
-import Receiving from './pages/Receiving/Receiving';
 import { useAuthStore } from './store/authStore';
 
 const App = () => {
