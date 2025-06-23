@@ -5,12 +5,12 @@ server:
 
 spring:
   datasource:
-#    url: jdbc:mysql://localhost:3306/warehouse_db?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true
-#    username: root
-#    password: dmveng11
-    url: jdbc:mysql://13.201.39.247:3306/warehouse_db?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/warehouse_db?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: Qobiljon96@
+    password: dmveng11
+#    url: jdbc:mysql://13.201.39.247:3306/warehouse_db?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true
+#    username: root
+#    password: Qobiljon96@
     driver-class-name: com.mysql.cj.jdbc.Driver
     
   jpa:
