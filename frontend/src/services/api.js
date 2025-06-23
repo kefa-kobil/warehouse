@@ -26,7 +26,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor with better error handling
+// Response interceptor with improved error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -38,15 +38,18 @@ api.interceptors.response.use(
       return Promise.reject(new Error('Server bilan aloqa yo\'q. Iltimos, keyinroq urinib ko\'ring.'));
     }
     
-    // Handle authentication errors
-    if (error.response?.status === 401) {
-      console.error('Authentication error');
+    // Only logout on actual authentication errors, not business logic errors
+    if (error.response?.status === 401 && 
+        (error.response?.data?.message?.includes('authentication') ||
+         error.response?.data?.message?.includes('token') ||
+         error.response?.data?.message?.includes('unauthorized'))) {
+      console.error('Authentication error - logging out');
       useAuthStore.getState().logout();
       window.location.href = '/login';
       return Promise.reject(new Error('Avtorizatsiya muddati tugagan. Qaytadan kiring.'));
     }
     
-    // Handle other HTTP errors
+    // Handle other HTTP errors without logout
     const message = error.response?.data?.message || 
                    error.response?.data?.error || 
                    `Server xatoligi: ${error.response?.status}`;

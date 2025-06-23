@@ -19,6 +19,9 @@ import {
   Statistic,
   Tabs,
   Divider,
+  Alert,
+  Empty,
+  Spin,
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -32,6 +35,7 @@ import {
   PlusCircleOutlined,
   MinusCircleOutlined,
   AppstoreAddOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -51,6 +55,7 @@ const Orders = () => {
   const [users, setUsers] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [itemsModalVisible, setItemsModalVisible] = useState(false);
   const [bulkModalVisible, setBulkModalVisible] = useState(false);
@@ -58,6 +63,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [bulkItems, setBulkItems] = useState([{ itemId: null, orderedQuantity: 0, unitPrice: 0 }]);
+  const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
   const [itemForm] = Form.useForm();
   const { t } = useTranslation();
@@ -127,7 +133,7 @@ const Orders = () => {
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       width: 80,
-      render: (amount) => <span className="text-xs font-medium">${amount || 0}</span>,
+      render: (amount) => <span className="text-xs font-medium">{amount ? `${Number(amount).toLocaleString()} so'm` : '0 so\'m'}</span>,
     },
     {
       title: 'Amallar',
@@ -143,6 +149,7 @@ const Orders = () => {
               icon={<CheckCircleOutlined />}
               onClick={() => handleConfirm(record.orderId)}
               className="text-xs"
+              loading={loading}
             >
               Tasdiqlash
             </Button>
@@ -154,6 +161,7 @@ const Orders = () => {
               icon={<InboxOutlined />}
               onClick={() => handleReceive(record.orderId)}
               className="text-xs"
+              loading={loading}
             >
               Qabul qilish
             </Button>
@@ -171,6 +179,7 @@ const Orders = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             className="text-xs"
+            disabled={record.status !== 'PENDING'}
           >
             Tahrirlash
           </Button>
@@ -219,13 +228,13 @@ const Orders = () => {
       title: 'Birlik narxi',
       dataIndex: 'unitPrice',
       key: 'unitPrice',
-      render: (price) => <span className="text-xs">${price}</span>,
+      render: (price) => <span className="text-xs">{price ? `${Number(price).toLocaleString()} so'm` : '0 so\'m'}</span>,
     },
     {
       title: 'Jami narx',
       dataIndex: 'totalPrice',
       key: 'totalPrice',
-      render: (price) => <span className="text-xs font-medium">${price}</span>,
+      render: (price) => <span className="text-xs font-medium">{price ? `${Number(price).toLocaleString()} so'm` : '0 so\'m'}</span>,
     },
     {
       title: 'Amallar',
@@ -263,7 +272,7 @@ const Orders = () => {
   ];
 
   const fetchData = async () => {
-    setLoading(true);
+    setDataLoading(true);
     try {
       const [ordersData, warehousesData, usersData, itemsData] = await Promise.all([
         orderService.getAll(),
@@ -279,7 +288,7 @@ const Orders = () => {
       console.error('Ma\'lumotlarni yuklashda xatolik:', error);
       message.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -295,6 +304,7 @@ const Orders = () => {
   };
 
   const handleEdit = (order) => {
+    console.log('Editing order:', order);
     setEditingOrder(order);
     form.setFieldsValue({
       ...order,
@@ -332,24 +342,42 @@ const Orders = () => {
   };
 
   const handleConfirm = async (id) => {
+    // Optimistically update the UI
+    setOrders(prevOrders => 
+      prevOrders.map(order => 
+        order.orderId === id ? { ...order, status: 'CONFIRMED' } : order
+      )
+    );
+    
     try {
       await orderService.confirm(id);
       message.success('Buyurtma tasdiqlandi');
       fetchData();
     } catch (error) {
       console.error('Buyurtmani tasdiqlashda xatolik:', error);
-      message.error(error.response?.data?.message || 'Buyurtmani tasdiqlashda xatolik yuz berdi');
+      message.error(error.message || 'Buyurtmani tasdiqlashda xatolik yuz berdi');
+      // Revert the optimistic update
+      fetchData();
     }
   };
 
   const handleReceive = async (id) => {
+    // Optimistically update the UI
+    setOrders(prevOrders => 
+      prevOrders.map(order => 
+        order.orderId === id ? { ...order, status: 'RECEIVED' } : order
+      )
+    );
+    
     try {
       await orderService.receive(id);
       message.success('Buyurtma qabul qilindi va omborga qo\'shildi');
       fetchData();
     } catch (error) {
       console.error('Buyurtmani qabul qilishda xatolik:', error);
-      message.error(error.response?.data?.message || 'Buyurtmani qabul qilishda xatolik yuz berdi');
+      message.error(error.message || 'Buyurtmani qabul qilishda xatolik yuz berdi');
+      // Revert the optimistic update
+      fetchData();
     }
   };
 
@@ -370,6 +398,7 @@ const Orders = () => {
       const items = await orderService.getItems(order.orderId);
       setOrderItems(items);
       setItemsModalVisible(true);
+      setActiveTab('1');
     } catch (error) {
       console.error('Buyurtma xomashyolarini yuklashda xatolik:', error);
       message.error('Buyurtma xomashyolarini yuklashda xatolik yuz berdi');
@@ -379,6 +408,7 @@ const Orders = () => {
   const handleAddItem = () => {
     itemForm.resetFields();
     itemForm.setFieldsValue({ editing: false });
+    setActiveTab('2');
   };
 
   const handleEditItem = (item) => {
@@ -388,6 +418,7 @@ const Orders = () => {
       editing: true,
       editingId: item.orderItemId,
     });
+    setActiveTab('2');
   };
 
   const handleItemSubmit = async (values) => {
@@ -409,6 +440,7 @@ const Orders = () => {
       const updatedItems = await orderService.getItems(selectedOrder.orderId);
       setOrderItems(updatedItems);
       itemForm.resetFields();
+      setActiveTab('1');
     } catch (error) {
       console.error('Xomashyoni saqlashda xatolik:', error);
       message.error('Xomashyoni saqlashda xatolik yuz berdi');
@@ -497,19 +529,36 @@ const Orders = () => {
     fetchData();
   }, []);
 
+  if (dataLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
         <Title level={2} className="mb-0 text-lg sm:text-xl md:text-2xl">Buyurtmalar</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAdd}
-          size="small"
-          className="w-full sm:w-auto"
-        >
-          Yangi buyurtma
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchData}
+            size="small"
+          >
+            Yangilash
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAdd}
+            size="small"
+            className="w-full sm:w-auto"
+          >
+            Yangi buyurtma
+          </Button>
+        </Space>
       </div>
 
       {/* Statistics */}
@@ -549,8 +598,8 @@ const Orders = () => {
             <Statistic
               title={<span className="text-xs">Jami summa</span>}
               value={stats.totalAmount}
-              prefix="$"
-              precision={2}
+              suffix="so'm"
+              precision={0}
               valueStyle={{ color: '#722ed1', fontSize: '16px' }}
             />
           </Card>
@@ -700,7 +749,7 @@ const Orders = () => {
         width="95%"
         style={{ maxWidth: 1200 }}
       >
-        <Tabs defaultActiveKey="1">
+        <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab="Xomashyolar ro'yxati" key="1">
             <div className="mb-4 flex flex-col sm:flex-row justify-between gap-2">
               <Space wrap>
@@ -710,7 +759,7 @@ const Orders = () => {
                   onClick={handleAddItem}
                   size="small"
                 >
-                  Bitta qo'shish
+                  Xomashyo qo'shish
                 </Button>
                 <Button
                   type="primary"
@@ -735,7 +784,7 @@ const Orders = () => {
               scroll={{ x: 600 }}
             />
           </TabPane>
-          <TabPane tab="Bitta xomashyo qo'shish" key="2">
+          <TabPane tab="Xomashyo qo'shish" key="2">
             <Form
               form={itemForm}
               layout="vertical"
@@ -775,10 +824,16 @@ const Orders = () => {
                 <Col xs={24} sm={12}>
                   <Form.Item
                     name="unitPrice"
-                    label="Birlik narxi"
+                    label="Birlik narxi (so'm)"
                     rules={[{ required: true, message: 'Birlik narxini kiriting' }]}
                   >
-                    <InputNumber min={0} step={0.01} className="w-full" />
+                    <InputNumber 
+                      min={0} 
+                      step={100} 
+                      className="w-full"
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    />
                   </Form.Item>
                 </Col>
               </Row>
@@ -853,14 +908,16 @@ const Orders = () => {
                     value={item.unitPrice}
                     onChange={(value) => updateBulkItem(index, 'unitPrice', value)}
                     min={0}
-                    step={0.01}
+                    step={100}
                     className="w-full"
                     size="small"
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
                   />
                 </Col>
                 <Col xs={12} sm={4}>
                   <Text strong className="text-xs">
-                    ${((item.orderedQuantity || 0) * (item.unitPrice || 0)).toFixed(2)}
+                    {((item.orderedQuantity || 0) * (item.unitPrice || 0)).toLocaleString()} so'm
                   </Text>
                 </Col>
                 <Col xs={12} sm={2}>
@@ -890,9 +947,9 @@ const Orders = () => {
 
           <div>
             <Text strong className="text-sm">
-              Jami: ${bulkItems.reduce((sum, item) => 
+              Jami: {bulkItems.reduce((sum, item) => 
                 sum + ((item.orderedQuantity || 0) * (item.unitPrice || 0)), 0
-              ).toFixed(2)}
+              ).toLocaleString()} so'm
             </Text>
           </div>
         </div>
